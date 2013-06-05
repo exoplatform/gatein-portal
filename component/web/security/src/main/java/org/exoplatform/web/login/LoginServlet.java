@@ -172,15 +172,7 @@ public class LoginServlet extends AbstractHttpServlet {
         }
 
         // Obtain initial URI
-        String uri = req.getParameter("initialURI");
-
-        // Otherwise compute one
-        if (uri == null || uri.length() == 0) {
-            uri = req.getContextPath();
-            log.debug("No initial URI found, will use default " + uri + " instead ");
-        } else {
-            log.debug("Found initial URI " + uri);
-        }
+        String uri = getInitialURI(req);
 
         // Redirect to initialURI
         if (status == AUTHENTICATED) {
@@ -225,5 +217,19 @@ public class LoginServlet extends AbstractHttpServlet {
             log.trace("Binding credentials to temporary authentication registry for user " + credentials.getUsername());
         }
         authRegistry.setCredentials(req, credentials);
+    }
+    
+    private String getInitialURI(HttpServletRequest req) {
+        String initialURI = req.getParameter("initialURI");
+        if (initialURI ==  null) {
+            initialURI = (String)req.getAttribute("javax.servlet.forward.request_uri");
+        }
+        if (initialURI == null) {
+            initialURI =  req.getContextPath();
+            log.debug("No initial URI found, will use default " + initialURI + " instead ");
+        } else {
+            log.debug("Found initial URI " + initialURI);
+        }
+        return initialURI;
     }
 }

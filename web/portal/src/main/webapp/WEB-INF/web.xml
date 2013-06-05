@@ -292,6 +292,7 @@
     <web-resource-collection>
       <web-resource-name>user authentication</web-resource-name>
       <url-pattern>/dologin</url-pattern>
+      <url-pattern>/private/*</url-pattern>
       <http-method>POST</http-method>
       <http-method>GET</http-method>
     </web-resource-collection>
