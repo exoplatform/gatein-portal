@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -600,12 +601,16 @@ public class NewPortalConfigListener extends BaseComponentPlugin {
     }
 
     public String getTemplateConfig(String type, String name) {
-        for (SiteConfigTemplates tempConfig : templateConfigs) {
-            Set<String> templates = tempConfig.getTemplates(type);
-            if (templates != null && templates.contains(name))
-                return tempConfig.getLocation();
-        }
-        return null;
+      if (templateConfigs == null) return null;
+      ListIterator<SiteConfigTemplates> listTemplateConfigs = templateConfigs.listIterator(templateConfigs.size());
+      while (listTemplateConfigs.hasPrevious()) {
+        SiteConfigTemplates tempConfig = listTemplateConfigs.previous();
+        if (tempConfig == null) continue;
+        Set<String> templates = tempConfig.getTemplates(type);
+          if (templates != null && templates.contains(name))
+          return tempConfig.getLocation();
+      }
+      return null;
     }
 
     /**
