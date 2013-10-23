@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.exoplatform.commons.utils.IOUtil;
+import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.component.RequestLifeCycle;
@@ -166,7 +167,7 @@ public class NewPortalConfigListener extends BaseComponentPlugin {
         }
         for (NewPortalConfig ele : configs) {
           ele.setOverrideMode(overrideExistingData);
-        }
+        } 
         this.pomMgr = pomMgr;
     }
 
@@ -223,6 +224,14 @@ public class NewPortalConfigListener extends BaseComponentPlugin {
 
     public void run() throws Exception {
         boolean prepareImport = performImport();
+        RequestLifeCycle.begin(PortalContainer.getInstance());
+        try {
+        	for (NewPortalConfig ele : configs) {
+        	  setRightOverideMode(ele);
+        	}
+        } finally {
+          RequestLifeCycle.end();
+        }
         if (isUseTryCatch) {
             RequestLifeCycle.begin(PortalContainer.getInstance());
             try {
@@ -753,5 +762,23 @@ public class NewPortalConfigListener extends BaseComponentPlugin {
         }
 
         return importMode;
+    }
+    
+    private void setRightOverideMode(NewPortalConfig ele) {
+      try {
+    	List<String> allPortalName = dataStorage_.getAllPortalNames();
+        if (ele.getOwnerType().equals(PortalConfig.PORTAL_TYPE)) {
+            HashSet<String> predefinedOwner = ele.getPredefinedOwner();
+            for (String element : predefinedOwner) {
+        	  String elementOverideMetadata = element + ".portalConfig.metadata.override";
+              if (!allPortalName.contains(element) && ( PropertyManager.getProperty(elementOverideMetadata) == null || PropertyManager.getProperty(elementOverideMetadata) == "" )) {
+        	    PropertyManager.setProperty(elementOverideMetadata, "true");
+        		ele.setOverrideMode(true);
+        	  }
+        	}
+          }
+      } catch (Exception e) {
+    	log.debug("Could not set right Override mode");
+      }
     }
 }
