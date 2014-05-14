@@ -26,6 +26,7 @@
   <msg name="description">Mô tả</msg>
   <msg name="noDescription">Không có mô tả</msg>
   <msg name="method">Phương thức</msg>
+  <msg name="property">Thuộc tính</msg>
   <msg name="parameters">Tham số</msg>
   <msg name="action">Thực thi</msg>
   <msg name="value">Giá trị</msg>

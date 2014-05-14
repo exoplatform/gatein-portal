@@ -26,6 +26,7 @@
   <msg name="description">Beskrivelse</msg>
   <msg name="noDescription">Ingen beskrivelse</msg>
   <msg name="method">Metode</msg>
+  <msg name="property">Egenskap</msg>
   <msg name="parameters">Parametere</msg>
   <msg name="action">Handling</msg>
   <msg name="value">Verdi</msg>

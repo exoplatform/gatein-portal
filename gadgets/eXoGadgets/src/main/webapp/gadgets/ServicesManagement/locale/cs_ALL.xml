@@ -26,6 +26,7 @@
   <msg name="description">Popis</msg>
   <msg name="noDescription">Žádný popis</msg>
   <msg name="method">Metoda</msg>
+  <msg name="property">Vlastnost</msg>
   <msg name="parameters">Parametry</msg>
   <msg name="action">Akce</msg>
   <msg name="value">Hodnota</msg>

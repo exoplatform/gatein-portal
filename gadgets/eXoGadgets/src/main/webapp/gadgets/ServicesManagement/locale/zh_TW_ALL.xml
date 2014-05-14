@@ -26,6 +26,7 @@
   <msg name="description">描述</msg>
   <msg name="noDescription">没有描述</msg>
   <msg name="method">方法</msg>
+  <msg name="property">屬性</msg>
   <msg name="parameters">參數</msg>
   <msg name="action">操作</msg>
   <msg name="value">值</msg>

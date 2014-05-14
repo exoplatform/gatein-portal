@@ -26,6 +26,7 @@
   <msg name="description">Aprašymas</msg>
   <msg name="noDescription">Nėra aprašymo</msg>
   <msg name="method">Metodas</msg>
+  <msg name="property">Ypatybė</msg>
   <msg name="parameters">Parametrai</msg>
   <msg name="action">Veiksmas</msg>
   <msg name="value">Reikšmė</msg>

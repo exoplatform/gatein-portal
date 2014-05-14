@@ -26,6 +26,7 @@
   <msg name="description">Опис</msg>
   <msg name="noDescription">Немає опису</msg>
   <msg name="method">Метод</msg>
+  <msg name="property">Властивість</msg>
   <msg name="parameters">Параметри</msg>
   <msg name="action">Дія</msg>
   <msg name="value">Значення</msg>

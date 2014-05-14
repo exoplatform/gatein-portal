@@ -26,6 +26,7 @@
   <msg name="description">Описание</msg>
   <msg name="noDescription">Нет описания</msg>
   <msg name="method">Метод</msg>
+  <msg name="property">Свойство</msg>
   <msg name="parameters">Параметры</msg>
   <msg name="action">Действие</msg>
   <msg name="value">Значение</msg>
