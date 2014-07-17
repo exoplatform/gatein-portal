@@ -76,8 +76,12 @@ public abstract class UIComponentFactory<T extends UIComponent> {
     }
 
     protected T create(Class<? extends T> type, WebuiRequestContext context) {
-        WebuiApplication app = (WebuiApplication) context.getApplication();
         try {
+            if (context == null) {
+                return type.newInstance();
+            }
+
+            WebuiApplication app = (WebuiApplication) context.getApplication();
             return app.createUIComponent(type, null, null, context);
         } catch (Exception e) {
             throw new RuntimeException(e);

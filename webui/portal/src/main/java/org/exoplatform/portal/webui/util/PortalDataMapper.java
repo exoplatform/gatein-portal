@@ -62,18 +62,22 @@ public class PortalDataMapper {
     @SuppressWarnings("unchecked")
     public static ModelObject buildModelObject(UIComponent uiComponent) {
         ModelObject model = null;
-        if (uiComponent instanceof UIPortal) {
-            model = toPortal((UIPortal) uiComponent);
-        } else if (uiComponent instanceof UIPageBody) {
-            model = new PageBody(((UIPageBody) uiComponent).getStorageId());
-        } else if (uiComponent instanceof UIPage) {
-            model = toPageModel((UIPage) uiComponent);
-        } else if (uiComponent instanceof UIPortlet) {
-            model = toPortletModel((UIPortlet) uiComponent);
-        } else if (uiComponent instanceof UIContainer) {
-            model = toContainer((UIContainer) uiComponent);
-        } else if (uiComponent instanceof UIGadget) {
-            model = toGadget((UIGadget) uiComponent);
+        try {
+            model = uiComponent.buildModelObject();
+        } catch (UnsupportedOperationException ex) {
+            if (uiComponent instanceof UIPortal) {
+                model = toPortal((UIPortal) uiComponent);
+            } else if (uiComponent instanceof UIPageBody) {
+                model = new PageBody(((UIPageBody) uiComponent).getStorageId());
+            } else if (uiComponent instanceof UIPage) {
+                model = toPageModel((UIPage) uiComponent);
+            } else if (uiComponent instanceof UIPortlet) {
+                model = toPortletModel((UIPortlet) uiComponent);
+            } else if (uiComponent instanceof UIContainer) {
+                model = toContainer((UIContainer) uiComponent);
+            } else if (uiComponent instanceof UIGadget) {
+                model = toGadget((UIGadget) uiComponent);
+            }
         }
         return model;
     }
