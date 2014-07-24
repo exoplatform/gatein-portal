@@ -31,6 +31,7 @@ import org.exoplatform.webui.application.WebuiApplication;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIComponent;
 
+@SuppressWarnings("unchecked")
 public abstract class UIComponentFactory<T extends UIComponent> {
     public static String DEFAULT_FACTORY_ID = "";
 
@@ -57,22 +58,33 @@ public abstract class UIComponentFactory<T extends UIComponent> {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T extends UIComponent> List<UIComponentFactory<? extends T>> getInstance(Class<T> type) {
+    public static <T extends UIComponent> UIComponentFactory<? extends T> getInstance(Class<T> type) {
         if (type == null) {
             throw new NullPointerException(type + " is null");
         }
 
-        List<UIComponentFactory<? extends T>> result = new LinkedList<UIComponentFactory<? extends T>>();
+        final List<UIComponentFactory<? extends T>> list = new LinkedList<UIComponentFactory<? extends T>>();
         for (Class<?> t : componentFactory.keySet()) {
             if (type.isAssignableFrom(t)) {
                 for (UIComponentFactory<?> factory : componentFactory.get(t)) {
-                    result.add((UIComponentFactory<? extends T>)factory);
+                    list.add((UIComponentFactory<? extends T>)factory);
                 }
             }
         }
 
-        return result;
+        return new UIComponentFactory<T>() {
+            @Override
+            public T createUIComponent(String factoryID, WebuiRequestContext context) {
+                T uiComponent = null;
+                for (UIComponentFactory<? extends T> f : list) {
+                    uiComponent = f.createUIComponent(factoryID, context);
+                    if (uiComponent != null) {
+                        break;
+                    }
+               }
+                return uiComponent;
+            }            
+        };
     }
 
     protected T create(Class<? extends T> type, WebuiRequestContext context) {
