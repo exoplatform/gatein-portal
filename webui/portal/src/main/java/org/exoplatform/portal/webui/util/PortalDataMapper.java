@@ -355,15 +355,9 @@ public class PortalDataMapper {
             }
         } else if (model instanceof Container) {
             Container container = (Container) model;
-            UIContainer uiTempContainer = null;
 
-            List<UIComponentFactory<? extends UIContainer>> factories = UIComponentFactory.getInstance(UIContainer.class);
-            for (UIComponentFactory<? extends UIContainer> f : factories) {
-                 uiTempContainer = f.createUIComponent(container.getFactoryId(), context);
-                 if (uiTempContainer != null) {
-                     break;
-                 }
-            }
+            UIComponentFactory<? extends UIContainer> factory = UIComponentFactory.getInstance(UIContainer.class);
+            UIContainer uiTempContainer = factory.createUIComponent(container.getFactoryId(), context);
 
             if (uiTempContainer == null) {
                 log.warn("Can't find container factory for: {}. Default container is used", container.getFactoryId());
