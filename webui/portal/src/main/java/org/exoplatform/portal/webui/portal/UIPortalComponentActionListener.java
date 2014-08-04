@@ -33,6 +33,7 @@ import org.exoplatform.portal.config.model.Container;
 import org.exoplatform.portal.config.model.TransientApplicationState;
 import org.exoplatform.portal.webui.application.PortletState;
 import org.exoplatform.portal.webui.application.UIPortlet;
+import org.exoplatform.portal.webui.container.UIComponentFactory;
 import org.exoplatform.portal.webui.container.UITabContainer;
 import org.exoplatform.portal.webui.login.UILogin;
 import org.exoplatform.portal.webui.login.UIResetPassword;
@@ -220,9 +221,13 @@ public class UIPortalComponentActionListener {
                 UITabPane subTabPane = portalComposer.getChild(UITabPane.class);
                 UIContainerList uiContainerConfig = subTabPane.getChild(UIContainerList.class);
                 if (uiContainerConfig != null && subTabPane.getSelectedTabId().equals(uiContainerConfig.getId())) {
-                    org.exoplatform.portal.webui.container.UIContainer uiContainer = uiTarget.createUIComponent(
-                            org.exoplatform.portal.webui.container.UIContainer.class, null, null);
                     Container container = uiContainerConfig.getContainer(sourceId);
+
+                    UIComponentFactory<? extends org.exoplatform.portal.webui.container.UIContainer> factory =
+                            UIComponentFactory.getInstance(org.exoplatform.portal.webui.container.UIContainer.class);
+                    org.exoplatform.portal.webui.container.UIContainer uiContainer =
+                            factory.createUIComponent(container.getFactoryId(), pcontext);
+
                     container.setId(String.valueOf(container.hashCode()));
                     uiContainer.setStorageId(container.getStorageId());
                     PortalDataMapper.toUIContainer(uiContainer, container);
