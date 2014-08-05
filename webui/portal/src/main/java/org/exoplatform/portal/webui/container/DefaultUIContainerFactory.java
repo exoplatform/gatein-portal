@@ -35,7 +35,7 @@ public class DefaultUIContainerFactory extends UIComponentFactory<UIContainer> {
         }
 
         Class<? extends UIContainer> containerType = null;
-        if (factoryID == null || factoryID.isEmpty()) {
+        if (factoryID == null || factoryID.isEmpty() || UIContainer.TABLE_COLUMN_CONTAINER.equals(factoryID)) {
             containerType = UIContainer.class;
         } else if (UITabContainer.TAB_CONTAINER.equals(factoryID)) {
             containerType = UITabContainer.class;

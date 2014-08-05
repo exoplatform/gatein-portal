@@ -227,6 +227,9 @@ public class UIPortalComponentActionListener {
                             UIComponentFactory.getInstance(org.exoplatform.portal.webui.container.UIContainer.class);
                     org.exoplatform.portal.webui.container.UIContainer uiContainer =
                             factory.createUIComponent(container.getFactoryId(), pcontext);
+                    if (uiContainer == null) {
+                      uiContainer = uiTarget.createUIComponent(org.exoplatform.portal.webui.container.UIContainer.class, null, null);
+                    }
 
                     container.setId(String.valueOf(container.hashCode()));
                     uiContainer.setStorageId(container.getStorageId());
