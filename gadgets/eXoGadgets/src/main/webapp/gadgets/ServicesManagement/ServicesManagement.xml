@@ -57,6 +57,8 @@
     <Locale lang="uk" messages="locale/uk_ALL.xml"/>
     <Locale lang="fa" messages="locale/fa_ALL.xml"/>
     <Locale lang="el" messages="locale/el_ALL.xml"/>
+    <Locale lang="pl" messages="locale/pl_ALL.xml"/>
+    <Locale lang="ro" messages="locale/ro_ALL.xml"/>
     <Require feature="dynamic-height"/>
     <Require feature="minimessage"/>
     <Require feature="views"/>
