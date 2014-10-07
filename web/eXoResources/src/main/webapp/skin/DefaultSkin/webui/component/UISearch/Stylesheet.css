@@ -91,6 +91,13 @@
 	border: none;
 }
 
+.UISearch .UISearchForm .QuickSet span {
+    float: left; /* orientation=lt */
+    float: right; /* orientation=rt */
+    margin: -9px 5px 0;
+    color: #333;
+}
+
 .UISearch .UISearchForm .QuickSet select {
 	float: left;	 /* orientation=lt */
 	float: right; /* orientation=rt */
@@ -123,6 +130,12 @@
 	float: none;
     width: auto;
     vertical-align: middle;
+}
+.UIFormTabPane .UISearch .UISearchForm .QuickSet span {
+    float: left; /* orientation=lt */
+    float: right; /* orientation=rt */
+    margin: -9px 5px 0;
+    color: #333;
 }
 
 .UIFormTabPane .UISearch .UISearchForm .QuickSet select {

@@ -51,6 +51,10 @@
 	border: none;
 }
 
+.UISearch .UISearchForm .QuickSet span {
+    color: #333;
+}
+
 .UISearch .UISearchForm .QuickSet select {
 	border: 1px solid #cccccc;
 	color: #565656;
@@ -59,6 +63,12 @@
 
 .UISearch .UISearchForm .QuickSet input {
 	border: 1px solid #cccccc;
+}
+.UIFormTabPane .UISearch .UISearchForm .QuickSet span {
+    float: left; /* orientation=lt */
+    float: right; /* orientation=rt */
+    margin: -9px 5px 0;
+    color: #333;
 }
 
 .UIFormTabPane .UISearch .UISearchForm .QuickSet select {

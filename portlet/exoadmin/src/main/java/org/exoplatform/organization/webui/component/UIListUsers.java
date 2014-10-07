@@ -51,6 +51,8 @@ import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.form.UIFormInputSet;
 import org.exoplatform.webui.form.UIFormSelectBox;
 import org.exoplatform.webui.form.UIFormStringInput;
+import org.exoplatform.webui.form.UIFormInputInfo;
+import org.exoplatform.webui.form.UISearchForm;
 
 /**
  * Created by The eXo Platform SARL Author : chungnv nguyenchung136@yahoo.com Jun 23, 2006 10:07:15 AM
@@ -74,6 +76,7 @@ public class UIListUsers extends UISearch {
     public static final String EMAIL = "email";
 
     public static final String USER_STATUS_FILTER = "userStatusFilter";
+    public static final String USER_STATUS_FILTER_LABEL = "userStatusFilterLabel";
 
     private static final String[] USER_BEAN_FIELD = { USER_NAME, LAST_NAME, FIRST_NAME, EMAIL };
 
@@ -109,6 +112,8 @@ public class UIListUsers extends UISearch {
         }
 
         if(showDisableUserFilterCheckbox) {
+            UIFormInputInfo label = new UIFormInputInfo("UIListUsers-" + USER_STATUS_FILTER_LABEL, null, null);
+            inputSet.addChild(label);
             UIFormSelectBox selectBox = new UIFormSelectBox("UIListUsers-" + USER_STATUS_FILTER, null, USER_STATUS_OPTIONS);
             selectBox.setValue(UserStatus.ENABLED.name());
             selectBox.setId("UIListUsers-" + USER_STATUS_FILTER);
@@ -136,6 +141,14 @@ public class UIListUsers extends UISearch {
         search(lastQuery_);
         grid_.getUIPageIterator().setCurrentPage(curPage);
         grid_.getUIPageIterator().getCurrentPageData();
+
+        //Process status label
+        UISearchForm searchForm = getUISearchForm();
+        String statusLabel = searchForm.getLabel("status");
+        UIFormInputInfo label = searchForm.getQuickSearchInputSet().getChildById("UIListUsers-" + USER_STATUS_FILTER_LABEL);
+        label.setDefaultValue(statusLabel);
+        label.reset();
+
         super.processRender(context);
     }
 
