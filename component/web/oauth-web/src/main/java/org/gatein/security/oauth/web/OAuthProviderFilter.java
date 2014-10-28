@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.exoplatform.container.component.ComponentRequestLifecycle;
 import org.exoplatform.web.security.AuthenticationRegistry;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
@@ -84,55 +85,64 @@ public abstract class OAuthProviderFilter<T extends AccessTokenContext> extends 
         HttpServletRequest httpRequest = (HttpServletRequest)request;
         HttpServletResponse httpResponse = (HttpServletResponse)response;
         HttpSession session = httpRequest.getSession();
-
-        // Restart current state if 'oauthInteraction' param has value 'start'
-        String interaction = httpRequest.getParameter(OAuthConstants.PARAM_OAUTH_INTERACTION);
-        if (OAuthConstants.PARAM_OAUTH_INTERACTION_VALUE_START.equals(interaction)) {
-            initInteraction(httpRequest, httpResponse);
-            saveRememberMe(httpRequest);
-            saveInitialURI(httpRequest);
-        }
-
-        // Possibility to init interaction with custom scope. It's needed when custom portlets want bigger scope then the one available in configuration
-        String scopeToUse = obtainCustomScopeIfAvailable(httpRequest);
-
-        InteractionState<T> interactionState;
-
+        
         try {
-            if (scopeToUse == null) {
-                interactionState = getOauthProviderProcessor().processOAuthInteraction(httpRequest, httpResponse);
-            } else {
-                if (log.isTraceEnabled()) {
-                    log.trace("Process oauth interaction with scope: " + scopeToUse);
-                }
-                interactionState = getOauthProviderProcessor().processOAuthInteraction(httpRequest, httpResponse, scopeToUse);
+            // Restart current state if 'oauthInteraction' param has value 'start'
+            String interaction = httpRequest.getParameter(OAuthConstants.PARAM_OAUTH_INTERACTION);
+            if (OAuthConstants.PARAM_OAUTH_INTERACTION_VALUE_START.equals(interaction)) {
+                initInteraction(httpRequest, httpResponse);
+                saveRememberMe(httpRequest);
+                saveInitialURI(httpRequest);
             }
-        } catch (OAuthException ex) {
-            log.warn("Error during OAuth flow with: " + ex.getMessage());
-
-            // Save exception to session and redirect to portal. Exception will be processed later on portal side
-            session.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH, ex);
-            redirectAfterOAuthError(httpRequest, httpResponse);
-            return;
-        }
-
-        if (InteractionState.State.FINISH.equals(interactionState.getState())) {
-            OAuthPrincipal<T> oauthPrincipal = getOAuthPrincipal(httpRequest, httpResponse, interactionState);
-
-            if (oauthPrincipal != null) {
-                if (httpRequest.getRemoteUser() == null) {
-                    // Save authenticated OAuthPrincipal to authenticationRegistry in case that we are anonymous user
-                    // Other filter should take care of processing it and perform GateIn login or registration
-                    authenticationRegistry.setAttributeOfClient(httpRequest, OAuthConstants.ATTRIBUTE_AUTHENTICATED_OAUTH_PRINCIPAL, oauthPrincipal);
+            
+            if (socialNetworkService instanceof ComponentRequestLifecycle) {
+                ((ComponentRequestLifecycle)socialNetworkService).startRequest(getExoContainer());
+            }
+            // Possibility to init interaction with custom scope. It's needed when custom portlets want bigger scope then the one available in configuration
+            String scopeToUse = obtainCustomScopeIfAvailable(httpRequest);
+            
+            InteractionState<T> interactionState;
+            
+            try {
+                if (scopeToUse == null) {
+                    interactionState = getOauthProviderProcessor().processOAuthInteraction(httpRequest, httpResponse);
                 } else {
-                    // For authenticated user, we will save it as request attribute and process it by other filter, which will update
-                    // userProfile with new username and accessToken
-                    httpRequest.setAttribute(OAuthConstants.ATTRIBUTE_AUTHENTICATED_OAUTH_PRINCIPAL, oauthPrincipal);
+                    if (log.isTraceEnabled()) {
+                        log.trace("Process oauth interaction with scope: " + scopeToUse);
+                    }
+                    interactionState = getOauthProviderProcessor().processOAuthInteraction(httpRequest, httpResponse, scopeToUse);
                 }
-
-                // Continue with request
-                chain.doFilter(request, response);
+            } catch (OAuthException ex) {
+                log.warn("Error during OAuth flow with: " + ex.getMessage());
+                
+                // Save exception to session and redirect to portal. Exception will be processed later on portal side
+                session.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH, ex);
+                redirectAfterOAuthError(httpRequest, httpResponse);
+                return;
             }
+            
+            if (InteractionState.State.FINISH.equals(interactionState.getState())) {
+                OAuthPrincipal<T> oauthPrincipal = getOAuthPrincipal(httpRequest, httpResponse, interactionState);
+                
+                if (oauthPrincipal != null) {
+                    if (httpRequest.getRemoteUser() == null) {
+                        // Save authenticated OAuthPrincipal to authenticationRegistry in case that we are anonymous user
+                        // Other filter should take care of processing it and perform GateIn login or registration
+                        authenticationRegistry.setAttributeOfClient(httpRequest, OAuthConstants.ATTRIBUTE_AUTHENTICATED_OAUTH_PRINCIPAL, oauthPrincipal);
+                    } else {
+                        // For authenticated user, we will save it as request attribute and process it by other filter, which will update
+                        // userProfile with new username and accessToken
+                        httpRequest.setAttribute(OAuthConstants.ATTRIBUTE_AUTHENTICATED_OAUTH_PRINCIPAL, oauthPrincipal);
+                    }
+                    
+                    // Continue with request
+                    chain.doFilter(request, response);
+                }
+            }
+        } finally {
+            if (socialNetworkService instanceof ComponentRequestLifecycle) {
+                ((ComponentRequestLifecycle)socialNetworkService).endRequest(getExoContainer());
+            }            
         }
     }
 

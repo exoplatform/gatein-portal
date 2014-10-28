@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.exoplatform.container.component.ComponentRequestLifecycle;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
 import org.gatein.common.logging.Logger;
@@ -88,9 +89,12 @@ public class OAuthLinkAccountFilter extends AbstractSSOInterceptor {
         }
 
         try {
+           if (socialNetworkService instanceof ComponentRequestLifecycle) {
+               ((ComponentRequestLifecycle)socialNetworkService).startRequest(getExoContainer());
+           }
             socialNetworkService.updateOAuthInfo(oauthPrincipal.getOauthProviderType(), httpRequest.getRemoteUser(),
-                    oauthPrincipal.getUserName(), oauthPrincipal.getAccessToken());
-
+                    oauthPrincipal.getUserName(), oauthPrincipal.getAccessToken());            
+            
             // Add some attribute to session, which will be read by OAuthLifecycle
             session.setAttribute(OAuthConstants.ATTRIBUTE_LINKED_OAUTH_PROVIDER, oauthPrincipal.getOauthProviderType().getFriendlyName());
         } catch (OAuthException gtnOauthOAuthException) {
@@ -100,6 +104,10 @@ public class OAuthLinkAccountFilter extends AbstractSSOInterceptor {
                 session.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_AFTER_FAILED_LINK, gtnOauthOAuthException);
             } else {
                 throw gtnOauthOAuthException;
+            }
+        } finally {
+            if (socialNetworkService instanceof ComponentRequestLifecycle) {
+                ((ComponentRequestLifecycle)socialNetworkService).endRequest(getExoContainer());
             }
         }
 
