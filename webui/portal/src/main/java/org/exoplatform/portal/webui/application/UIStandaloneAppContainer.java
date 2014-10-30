@@ -40,6 +40,8 @@ import org.exoplatform.webui.core.UIComponent;
 import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
 
 @ComponentConfig(template = "system:/groovy/portal/webui/application/UIStandaloneAppContainer.gtmpl", events = { @EventConfig(listeners = UIStandaloneAppContainer.LogoutActionListener.class) })
 public class UIStandaloneAppContainer extends UIContainer {
@@ -124,6 +126,7 @@ public class UIStandaloneAppContainer extends UIContainer {
     }
 
     public static class LogoutActionListener extends EventListener<UIComponent> {
+        private static final Logger log = LoggerFactory.getLogger(LogoutActionListener.class);
         public void execute(Event<UIComponent> event) throws Exception {
             StandaloneAppRequestContext context = (StandaloneAppRequestContext) event.getRequestContext();
             HttpServletRequest req = context.getRequest();
@@ -131,13 +134,25 @@ public class UIStandaloneAppContainer extends UIContainer {
             // Delete the token from JCR
             String token = getTokenCookie(req);
             if (token != null) {
-                AbstractTokenService tokenService = AbstractTokenService.getInstance(CookieTokenService.class);
-                tokenService.deleteToken(token);
+                try {
+                    AbstractTokenService tokenService = AbstractTokenService.getInstance(CookieTokenService.class);
+                    tokenService.deleteToken(token);
+                } catch (Exception ex) {
+                    if(log.isDebugEnabled()) {
+                        log.debug("Exception when try to remove cookieToken", ex);
+                    }
+                }
             }
             token = LoginServlet.getOauthRememberMeTokenCookie(req);
             if (token != null) {
-                AbstractTokenService tokenService = AbstractTokenService.getInstance(CookieTokenService.class);
-                tokenService.deleteToken(token);
+                try {
+                    AbstractTokenService tokenService = AbstractTokenService.getInstance(CookieTokenService.class);
+                    tokenService.deleteToken(token);
+                } catch (Exception ex) {
+                    if(log.isDebugEnabled()) {
+                        log.debug("Exception when try to remove cookieToken", ex);
+                    }
+                }
             }
 
             LogoutControl.wantLogout();
