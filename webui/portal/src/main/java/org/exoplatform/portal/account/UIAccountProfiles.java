@@ -74,7 +74,7 @@ public class UIAccountProfiles extends UIForm {
         addUIFormInput(new UIFormStringInput("lastName", "lastName", useraccount.getLastName())
                 .addValidator(StringLengthValidator.class, 1, 45).addValidator(MandatoryValidator.class)
                 .addValidator(PersonalNameValidator.class));
-        addUIFormInput(new UIFormStringInput("displayName", "displayName", useraccount.getDisplayName()).addValidator(
+        addUIFormInput(new UIFormStringInput("displayName", "displayName", useraccount.getFullName()).addValidator(
                 StringLengthValidator.class, 0, 90).addValidator(UserConfigurableValidator.class, "displayname",
                 UserConfigurableValidator.KEY_PREFIX + "displayname", false));
         addUIFormInput(new UIFormStringInput("email", "email", useraccount.getEmail()).addValidator(MandatoryValidator.class)
