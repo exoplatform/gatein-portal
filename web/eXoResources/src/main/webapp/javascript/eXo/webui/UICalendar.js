@@ -33,6 +33,8 @@
 	                      // SUNDAY (1) in the U.S, MONDAY (2) in France, TUESDAY
 	                      // (3), etc
 	  weekdays : null,
+	  
+	  hideCalendarHandler : null,
 	
 	  init : function(field, isDisplayTime, datePattern, value, monthNames) {
 	    this.isDisplayTime = isDisplayTime;
@@ -60,7 +62,7 @@
 	    // fix bug for IE 6
 	    var cld = document.getElementById(this.calendarId);
 	    if (base.Browser.isIE6()) {
-	      var blockClnd = document.getElementById('BlockCaledar');
+	      var blockClnd = document.getElementById('BlockCalendar');
 	      var iframe = document.getElementById(this.calendarId + 'IFrame');
 	      iframe.style.height = blockClnd.offsetHeight + "px";
 	    }
@@ -69,20 +71,31 @@
 	
 	  create : function() {
 	    var clndr = document.createElement("div");
-	    clndr.id = this.calendarId;
-	    clndr.style.position = "absolute";
+	    clndr.id = this.calendarId;	   
+			clndr.style.position = "absolute";
+			clndr.style.zIndex = "99";
 	    if (base.Browser.isIE6()) {
-	      clndr.innerHTML = "<div class='UICalendarComponent'><iframe id='"
+	      clndr.innerHTML = "<div class='calendarComponent' ><iframe id='"
 	          + this.calendarId
 	          + "IFrame' frameBorder='0' style='position:absolute;height:100%;' scrolling='no'></iframe><div style='position:absolute;'></div></div>";
 	    } else {
-	      clndr.innerHTML = "<div class='UICalendarComponent'><div style='position: absolute; width: 100%;'></div></div>";
+	      clndr.innerHTML = "<div class='calendarComponent' ><div style='position: absolute; width: 100%;'></div></div>";
 	    }
 	    document.body.appendChild(clndr);
 	  },
 	
 	  show : function() {
-	    document.onclick = function() {eXo.webui.UICalendar.hide()};
+	    //document.onclick = function() {eXo.webui.UICalendar.hide()};
+		if(!this.hideCalendarHandler) {
+		  this.hideCalendarHandler = function() {eXo.webui.UICalendar.hide();};
+		}
+		if(document.addEventListener) {
+		  document.addEventListener("click", this.hideCalendarHandler, false);
+		} else if(document.attachEvent) {
+		  document.attachEvent("onclick", this.hideCalendarHandler);
+		} else {
+		  document.onclick = function() {eXo.webui.UICalendar.hide()};
+		}
 	    var re = /^(\d{1,2}\/\d{1,2}\/\d{1,4})\s*(\s+\d{1,2}:\d{1,2}:\d{1,2})?$/i;
 	    this.selectedDate = new Date();
 	
@@ -146,9 +159,9 @@
 	      testDate = testDate.replace("ss", secondValue);
 	
 	      if (re.test(testDate)) {
-	        this.selectedDate.setDate(dateValue);
-	        this.selectedDate.setMonth(monthValue);
-	        this.selectedDate.setFullYear(yearValue);
+	    	this.selectedDate.setFullYear(yearValue);
+	    	this.selectedDate.setMonth(monthValue);
+	    	this.selectedDate.setDate(dateValue);
 	        this.selectedDate.setHours(hoursValue);
 	        this.selectedDate.setMinutes(minutesValue);
 	        this.selectedDate.setSeconds(secondValue);
@@ -171,13 +184,13 @@
 	        right = "0px";
 	    }
 	    var posCal = $(this.dateField).offset().top - y;
-	    var heightCal = document.getElementById('BlockCaledar');
+	    var heightCal = document.getElementById('BlockCalendar');
 	    var afterShow = posCal + heightCal.offsetHeight;
 	    if (afterShow > beforeShow) {
 	      clndr.firstChild.style.top = -heightCal.offsetHeight + 'px';
 	    }
 	
-	    eXo.webui.UICalendar.initDragDrop();
+	    // eXo.webui.UICalendar.initDragDrop();
 	
 	    var primary = $(this.dateField).closest("#UIECMSearch");
 	    if (primary.length && base.Browser.isFF()) {
@@ -186,6 +199,7 @@
 	      calendar.style.left = this.dateField.offsetLeft
 	          - this.dateField.offsetWidth - 32 + "px";
 	    }
+		$("#BlockCalendar a[rel='tooltip']").tooltip();
 	  },
 	
 	  onTabOut : function(event) {
@@ -204,7 +218,13 @@
 	      this.dateField.blur();
 	      this.dateField = null;
 	    }
-	    document.onclick = null;
+	    if(document.removeEventListener) {
+		  document.removeEventListener("click", this.hideCalendarHandler, false);
+		} else if(document.detachEvent) {
+		  document.detachEvent("onclick", this.hideCalendarHandler);
+		} else {
+		  document.onclick = null;
+		}
 	    // document.onmousedown = null;
 	  },
 	
@@ -217,30 +237,21 @@
 	    var daysInMonth = this.getDaysInMonth(this.currentDate.getFullYear(),
 	        this.currentDate.getMonth());
 	    var clazz = null;
-	    var table = '<div id="BlockCaledar" class="BlockCalendar" onclick="event.cancelBubble = true">';
-	    table += '<div class="UICalendar" onmousedown="event.cancelBubble = true">';
-	    table += '	<table class="MonthYearBox">';
-	    table += '	  <tr>';
-	    table += '			<td class="MonthButton"><a class="PreviousMonth" href="#PreviousMonth" onclick="eXo.webui.UICalendar.changeMonth(-1);" title="'
-	        + msg.getMessage("PreviousMonth") + '"></a></td>';
-	    table += '			<td class="YearButton"><a class="PreviousYear" href="#PreviousYear" onclick="eXo.webui.UICalendar.changeYear(-1);" title="'
-	        + msg.getMessage("PreviousYear") + '"></a></td>';
-	    table += '			<td><font color="#f89302">'
-	        + this.months[this.currentDate.getMonth()] + '</font> - '
-	        + this.currentDate.getFullYear() + '</td>';
-	    table += '			<td class="YearButton"><a class="NextYear" href="#NextYear" onclick="eXo.webui.UICalendar.changeYear(1);" title="'
-	        + msg.getMessage("NextYear") + '"></a></td>';
-	    table += '			<td class="MonthButton"><a class="NextMonth" href="#NextMonth" onclick="eXo.webui.UICalendar.changeMonth(1);" title="'
-	        + msg.getMessage("NextMonth") + '"></a></td>';
-	    table += '		</tr>';
-	    table += '	</table>';
-	    table += '	<div style="margin-top: 6px;padding: 0px 5px;">';
-	    table += '		<table>';
-	    table += '			<tr>';
-	    if (this.weekdays == null) {
-	      this.weekdays = new Array("S", "M", "T", "W", "T", "F", "S");
+	    var table = '<div id="BlockCalendar" class="uiCalendarComponent uiBox" onclick="event.cancelBubble = true">';
+		table += '<div onmousedown="event.cancelBubble = true" style="cursor: default">';
+	    table += '<h5 class="title clearfix">';
+		table += '<a data-placement="right" rel="tooltip" onclick="eXo.webui.UICalendar.changeMonth(-1);" class="actionIcon pull-left" data-original-title="'+msg.getMessage("PreviousMonth")+'"><i class="uiIconMiniArrowLeft uiIconLightGray"></i></a>';
+	    table += '<span>'+ this.months[this.currentDate.getMonth()] + ', '+ this.currentDate.getFullYear() + '</span>';
+		table += '<a data-placement="right" rel="tooltip" onclick="eXo.webui.UICalendar.changeMonth(1);" class="actionIcon pull-right" data-original-title="'+msg.getMessage("NextMonth")+'"><i class="uiIconMiniArrowRight uiIconLightGray"></i></a>';
+	    table += '</h5>';
+
+	    table += '<table class="weekList">';
+	    table += '  <tr>';
+	    
+		if (this.weekdays == null) {
+	    	this.weekdays = new Array("S", "M", "T", "W", "T", "F", "S");
 	    }
-	    for ( var i = 0; i < 7; i++) {
+		for ( var i = 0; i < 7; i++) {
 	      if (i == (8 - this.firstDayOfWeek) % 7) {
 	        table += ' <td><font color="red">'
 	            + this.weekdays[(i + this.firstDayOfWeek - 1) % 7] + '</font></td>';
@@ -249,14 +260,26 @@
 	            + '</td>';
 	      }
 	    }
-	    table += '			</tr>';
-	    table += '		</table>';
-	    table += '	</div>';
-	    table += '	<div class="CalendarGrid">';
-	    table += '	<table>';
-	
+	    
+	    table += '  </tr>';
+	    table += '</table>';
+	    table += '<hr>';
+
+		var _pyear, _pmonth, _pday, _nyear, _nmonth, _nday, _weekend;
+		var _today = new Date();
+		var tableRow='';
+		if(startDayOfWeek==0) startDayOfWeek = 7;
+		_pyear = (this.currentDate.getMonth() == 0) ? this.currentDate.getFullYear() - 1 : this.currentDate.getFullYear();
+		_pmonth = (this.currentDate.getMonth() == 0) ? 11 : this.currentDate.getMonth() - 1;
+		_pday = this.getDaysInMonth(_pyear, _pmonth) - ((startDayOfWeek + ((8 - this.firstDayOfWeek) % 7)) % 7) + 1;
+		
+		_nmonth = (this.currentDate.getMonth() == 11) ? 0 : this.currentDate.getMonth() + 1;
+		_nyear = (this.currentDate.getMonth() == 11) ? this.currentDate.getFullYear() + 1 : this.currentDate.getFullYear();
+		_nday = 1;
+		
+		table += '<table cellspacing="0" cellpadding="0" id="" class="weekDays">';
 	    for ( var week = 0; week < 6; week++) {
-	      table += "<tr>";
+		  tableRow += '<tr {{week'+week+'}}>';
 	      for ( var dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek++) {
 	        if (week == 0
 	            && dayOfWeek == (startDayOfWeek + ((8 - this.firstDayOfWeek) % 7)) % 7) {
@@ -269,45 +292,58 @@
 	              && this.currentDate.getFullYear() == this.selectedDate
 	                  .getFullYear()
 	              && this.currentDate.getMonth() == this.selectedDate.getMonth()) {
-	            clazz = 'Current';
-	          } else if (dayOfWeek == 0 || dayOfWeek == 6) {
-	            clazz = 'Weekend';
+	            clazz = 'selected';
 	          } else {
-	            clazz = 'Weekday';
+	            clazz = '';
 	          }
-	
-	          table = table + '<td><a class="' + clazz
+			  if(_today.getDate() == dayOfMonth
+	              && this.currentDate.getFullYear() == _today.getFullYear()
+	              && this.currentDate.getMonth() == _today.getMonth()) {
+				clazz = 'highLight today';
+				tableRow = tableRow.replace('{{week'+week+'}}','class="currentWeek"');
+			  }
+	          tableRow = tableRow + '<td><a class="' + clazz
 	              + '" href="#SelectDate" onclick="eXo.webui.UICalendar.setDate('
 	              + this.currentDate.getFullYear() + ','
 	              + (this.currentDate.getMonth() + 1) + ',' + dayOfMonth + ')">'
 	              + dayOfMonth + '</a></td>';
 	          dayOfMonth++;
-	        } else {
-	          table = table + "<td class='empty'><div>&nbsp;</div></td>";
-	        }
+			  _weekend = week;
+	        } else if(validDay == 0 && week == 0) {
+	          tableRow = tableRow + '<td><a href="#SelectDate" class="otherMonth" onclick="eXo.webui.UICalendar.setDate('
+	              + _pyear + ','
+	              + (_pmonth + 1) + ',' + _pday + ')">'
+	              + _pday + '</a></td>';
+				_pday++;
+	        } else if(validDay == 0 && week != 0 && _weekend==week){
+				tableRow = tableRow + '<td><a href="#SelectDate" class="otherMonth" onclick="eXo.webui.UICalendar.setDate('
+	              + _nyear + ','
+	              + (_nmonth + 1) + ',' + _nday + ')">'
+	              + _nday + '</a></td>';
+				_nday++;
+			}
 	      }
-	      table += "</tr>";
+	      tableRow += "</tr>";
+		  tableRow = tableRow.replace('{{week'+week+'}}','');
 	    }
-	    table += '		</table>';
-	    table += '	</div>';
-	    if (this.isDisplayTime) {
-	      table += '	<div class="CalendarTimeBox">';
-	      table += '		<div class="CalendarTimeBoxR">';
-	      table += '			<div class="CalendarTimeBoxM"><span><input class="InputTime" size="2" maxlength="2" value="'
+	    table += tableRow + '</table>';
+	    
+		if (this.isDisplayTime) {
+	      table += ' <div class="calendarTimeInput">';
+	      table += '   <span><input type="text" class="InputTime" maxlength="2" value="'
 	          + ((this.currentDate.getHours()) > 9 ? this.currentDate.getHours()
 	              : "0" + this.currentDate.getHours())
-	          + '" onkeyup="eXo.webui.UICalendar.setHour(this)" >:<input size="2" class="InputTime" maxlength="2" value="'
+	          + '" onkeyup="eXo.webui.UICalendar.setHour(this)" onfocus="this.parentNode.className=\'focus\'" onblur="this.parentNode.className=\'\'">'
+			  + ':'
+			  + '<input type="text" class="InputTime" maxlength="2" value="'
 	          + ((this.currentDate.getMinutes()) > 9 ? this.currentDate
 	              .getMinutes() : "0" + this.currentDate.getMinutes())
-	          + '" onkeyup = "eXo.webui.UICalendar.setMinus(this)">:<input size="2" class="InputTime" maxlength="2" value="'
-	          + ((this.currentDate.getSeconds()) > 9 ? this.currentDate
-	              .getSeconds() : "0" + this.currentDate.getSeconds())
-	          + '" onkeyup = "eXo.webui.UICalendar.setSeconds(this)"></span></div>';
-	      table += '		</div>';
-	      table += '	</div>';
+	          + '" onkeyup = "eXo.webui.UICalendar.setMinus(this)" onfocus="this.parentNode.className=\'focus\'" onblur="this.parentNode.className=\'\'"></span>';
+	      table += ' </div>';
 	    }
+
 	    table += '</div>';
-	    table += '</div>';
+		table += '</div>';
 	    return table;
 	  },
 	
@@ -317,12 +353,12 @@
 	    var clndr = document.getElementById(this.calendarId);
 	    clndr.firstChild.lastChild.innerHTML = this.renderCalendar();
 	
-	    eXo.webui.UICalendar.initDragDrop();
+	    // eXo.webui.UICalendar.initDragDrop();
 	  },
 	
 	  initDragDrop : function() {
-	    var drag = $("#BlockCaledar");
-	    var component = drag.closest(".UICalendarComponent");    
+	    var drag = $("#BlockCalendar");
+	    var component = drag.closest(".calendarComponent");    
 	    var calendar = drag.children(".UICalendar").first();
 	    var innerWidth = drag[0].offsetWidth;
 	
@@ -339,8 +375,8 @@
 	    this.currentDay = 0;
 	    var clndr = document.getElementById(this.calendarId);
 	    clndr.firstChild.lastChild.innerHTML = this.renderCalendar();
-	
-	    eXo.webui.UICalendar.initDragDrop();
+		$("#BlockCalendar a[rel='tooltip']").tooltip();
+	    // eXo.webui.UICalendar.initDragDrop();
 	  },
 	
 	  setDate : function(year, month, day) {
