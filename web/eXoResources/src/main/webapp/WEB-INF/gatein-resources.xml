@@ -382,7 +382,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-affix.js</include>
+          <include>/skin/bootstrap/js/bootstrap-affix.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -400,7 +400,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-alert.js</include>
+          <include>/skin/bootstrap/js/bootstrap-alert.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -418,7 +418,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-button.js</include>
+          <include>/skin/bootstrap/js/bootstrap-button.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -436,7 +436,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-carousel.js</include>
+          <include>/skin/bootstrap/js/bootstrap-carousel.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -454,7 +454,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-collapse.js</include>
+          <include>/skin/bootstrap/js/bootstrap-collapse.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -472,7 +472,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-dropdown.js</include>
+          <include>/skin/bootstrap/js/bootstrap-dropdown.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -490,7 +490,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-modal.js</include>
+          <include>/skin/bootstrap/js/bootstrap-modal.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -508,7 +508,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-popover.js</include>
+          <include>/skin/bootstrap/js/bootstrap-popover.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -529,7 +529,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-scrollspy.js</include>
+          <include>/skin/bootstrap/js/bootstrap-scrollspy.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -547,7 +547,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-tab.js</include>
+          <include>/skin/bootstrap/js/bootstrap-tab.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -565,7 +565,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-tooltip.js</include>
+          <include>/skin/bootstrap/js/bootstrap-tooltip.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -585,7 +585,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-transition.js</include>
+          <include>/skin/bootstrap/js/bootstrap-transition.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
@@ -603,7 +603,7 @@
       <adapter>
         (function($) {
           var _$ = window.jQuery; window.jQuery = $;
-          <include>/javascript/bootstrap/js/bootstrap-typeahead.js</include>
+          <include>/skin/bootstrap/js/bootstrap-typeahead.js</include>
           window.jQuery = _$;
         })($);
       </adapter>
