@@ -23,35 +23,35 @@
 var uiFormInputThemeSelector = {
 
   initForm : function() {
-	  $(".UIFormInputThemeSelector").find(".SetDefault").on("click", function() {
+	  $(".uiFormInputThemeSelector").find(".setDefault").on("click", function() {
 		  uiFormInputThemeSelector.setDefaultTheme(this,'DefaultTheme');
 	  });	  
   },
   
   initSelector : function() {
-	  $(".UIFormInputThemeSelector").find(".UIThemeSelector").parent().on("click", function() {
-		  var theme = $(this).children("div").attr("class").replace("UIThemeSelector ", "");
+	  $(".uiFormInputThemeSelector").find(".uiThemeSelector").parent().on("click", function() {
+		  var theme = $(this).children("div").attr("class").replace("uiThemeSelector ", "");
 		  uiFormInputThemeSelector.showThemeSelected(this, theme); 
 	  });
   },
   
   showThemeSelected : function(obj, param) {
     var jqObj = $(obj);
-    var itemListContainer = jqObj.parent().closest(".ItemListContainer");
-    var detailList = itemListContainer.next("div").find("div.UIThemeSelector").eq(0);
-    detailList.next("div").html(jqObj.find("div.NameStyle").eq(0).html());
-    detailList.attr("class", "UIThemeSelector " + param);
+    var itemListContainer = jqObj.parent().closest(".itemListContainer");
+    var detailList = itemListContainer.next("div").find(".uiThemeSelector").eq(0);
+    detailList.next("div").html(jqObj.find(".nameStyle").eq(0).html());
+    detailList.attr("class", "uiThemeSelector " + param);
     //jqObj.parent().prev("input")[0].value = param;//This does not work as 'prev' in jQuery does not return hidden input
     jqObj.parent().parent().children("input").eq(0).val(param);
   },
 
   setDefaultTheme : function(obj, param) {
-    var itemDetailList = $(obj).parent().closest(".ItemDetailList");
-    var detailList = itemDetailList.find("div.UIThemeSelector").eq(0);
-    detailList.attr("class", "UIThemeSelector " + param);
+    var itemDetailList = $(obj).parent().closest(".itemDetailList");
+    var detailList = itemDetailList.find(".uiThemeSelector").eq(0);
+    detailList.attr("class", "uiThemeSelector " + param);
 
     detailList.next("div").html(msg.getMessage("DefaultTheme"));
-    itemDetailList.prev("div").find("div.ItemList").eq(0).parent().children("input").eq(0).val(param);
+    itemDetailList.prev("div").find("div.itemList").eq(0).parent().children("input").eq(0).val(param);
   }  
 };
 
@@ -66,11 +66,11 @@ eXo.webui.UIPageTemplateOptions = {
    */
   selectPageLayout : function(id, selectedIndex) {
     var dropDownControl = $("#" + id);
-    var itemSelectorAncest = dropDownControl.closest(".ItemSelectorAncestor");
-    var itemList = itemSelectorAncest.find("div.ItemList");
-    var itemSelectorLabel = itemSelectorAncest.find("a.OptionItem");
-    var itemSelector = dropDownControl.parent().parent().parent("div.UIItemSelector");
-    var itemDetailList = itemSelector.find("div.ItemDetailList");
+    var itemSelectorAncest = dropDownControl.closest(".itemListContainer");
+    var itemList = itemSelectorAncest.find(".itemList");
+    var itemSelectorLabel = itemSelectorAncest.find(".OptionItem");
+    var itemSelector = dropDownControl.closest(".uiItemSelector");
+    var itemDetailList = itemSelector.find(".itemDetailList");
     if (itemList.length == 0)
       return;
     for (i = 0; i < itemSelectorLabel.length; ++i) {
@@ -81,7 +81,7 @@ eXo.webui.UIPageTemplateOptions = {
         if (itemDetailList.length < 1)
           continue;
         itemDetailList[i].style.display = "block";
-        var selectedItem = $(itemList[i]).find("div.SelectedItem").eq(0);
+        var selectedItem = $(itemList[i]).find(".selectedItem").eq(0);
         if (!selectedItem || selectedItem == null)
           continue;
         var setValue = selectedItem.find("#SetValue")[0];
@@ -103,8 +103,8 @@ eXo.portal.UIPortal = {
   initMouseHover : function(id) {
 	  var comp = $("#" + id);
 	  if (!comp.length) return;
-	  comp[0].onmouseover = function(event) {eXo.portal.UIPortal.blockOnMouseOver(event, this, true);};
-	  comp[0].onmouseout = function(event) {eXo.portal.UIPortal.blockOnMouseOver(event, this, false);};
+	  comp.mouseenter(function(event){eXo.portal.UIPortal.blockOnMouseOver(event, this, true);});
+	  comp.mouseleave(function(event){eXo.portal.UIPortal.blockOnMouseOver(event, this, false);});
   },
   
   blockOnMouseOver : function(event, block, isOver) {
@@ -136,12 +136,17 @@ eXo.portal.UIPortal = {
       else if (child.hasClass("EDITION-BLOCK"))
       {
         editBlock = child;
-      }
+      }            
     });
 
     if (!editBlock)
     {
       return;
+    }
+    
+    if (jqBlock.hasClass("UIPortlet")) {
+    	jqBlock.find(".portletLayoutDecorator, .portletLayoutDecoratorHover")
+    						.toggleClass("portletLayoutDecorator portletLayoutDecoratorHover");
     }
 
     if (isOver)
@@ -149,7 +154,14 @@ eXo.portal.UIPortal = {
       var newLayer = editBlock.find("div.NewLayer").eq(0);
       var height = 0;
       var width = 0;
-
+      
+      // hide info-bar of parent containers
+      var parentContainer = editBlock.parents('div.UIContainer:last');
+	  eXo.portal.UIPortal.blockOnMouseOver(event, parentContainer, false);
+	  parentContainer.find('div.UIContainer').each(function(){
+	    eXo.portal.UIPortal.blockOnMouseOver(event, this, false);
+	  });
+      
       if (layoutBlock && layoutBlock.css("display") != "none")
       {
         height = layoutBlock[0].offsetHeight;
@@ -162,7 +174,7 @@ eXo.portal.UIPortal = {
       }
 
       if (jqBlock.hasClass("UIPortlet"))
-      {
+      {      	
         newLayer.css("width", width + "px");
         newLayer.css("height", height + "px");
       }
@@ -176,10 +188,16 @@ eXo.portal.UIPortal = {
         }
       }
 
-      newLayer.parent().css("top", -height + "px");
       editBlock.css("display", "block");
+      var isTab =  $(layoutBlock, viewBlock).find('div > .UIRowContainer > .uiTabContainer').length != 0;
+      if (isTab) {
+      	newLayer.parent().css("top", -height-5 + "px");
+      	newLayer.next('.CONTROL-BLOCK').height(17);
+      } else {
+      	newLayer.parent().css("top", -height + "px");
+      }
 
-      var infBar = editBlock.find("div.UIInfoBar").eq(0);
+      var infBar = editBlock.find("div.UIInfoBar, .uiInfoBar").eq(0);
       if (infBar && (base.Browser.isIE6() || (base.Browser.isIE7() && eXo.core.I18n.isRT())))
       {
         // Avoid resizing width of portlet/container block multiple times
@@ -199,7 +217,7 @@ eXo.portal.UIPortal = {
             delIcon = infBar.find("a.DeleteContainerIcon");
           }
 
-          var infBarWidth = infBar.find("div.DragControlArea")[0].offsetWidth;
+          var infBarWidth = infBar.find(".DragControlArea, .uiIconDragDrop")[0].offsetWidth;
           infBarWidth += blockIcon[0].offsetWidth;
           if (editIcon.length > 0)
           {
@@ -213,6 +231,7 @@ eXo.portal.UIPortal = {
           infBar.css("width", infBarWidth + 35 + "px");
         }
       }
+      infBar.find('[rel="tooltip"]').tooltip();
     }
     else
     {
@@ -223,6 +242,10 @@ eXo.portal.UIPortal = {
         if (normalBlock.length > 0)
         {
           normalBlock.eq(0).removeClass("OverContainerBlock").addClass("NormalContainerBlock");
+          if(!jqBlock.hasClass("UIPortlet"))
+          {
+        	eXo.portal.UIPortal.blockOnMouseOver(event,jqBlock.closest('div.UIComponentBlock').parent(), true);
+          }
         }
       }
     }

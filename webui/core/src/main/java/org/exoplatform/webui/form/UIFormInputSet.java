@@ -139,7 +139,7 @@ public class UIFormInputSet extends UIContainer {
         }
         Writer w = context.getWriter();
         w.write("<div class=\"UIFormInputSet\">");
-        w.write("<table class=\"UIFormGrid\">");
+        w.write("<div class=\"form-horizontal\">");
         ResourceBundle res = context.getApplicationResourceBundle();
         UIForm uiForm = getAncestorOfType(UIForm.class);
         for (UIComponent inputEntry : getChildren()) {
@@ -157,21 +157,21 @@ public class UIFormInputSet extends UIContainer {
                         hasLabel = true;
                     }
                 }
-                w.write("<tr>");
-                w.write("<td class=\"FieldLabel\">");
-
-                // if missing resource and the label hasn't been set before, don't print out the label.
+                w.write("<div class=\"control-group\">");
                 if (hasLabel) {
+                    w.write("<label class=\"control-label\" for=\"" + inputEntry.getId() + "\">");
                     w.write(label);
+                    w.write("</label>");
+                    w.write("<div class=\"controls\">");
+                } else {
+                    w.write("<div class=\"controls-full\">");
                 }
-                w.write("</td>");
-                w.write("<td class=\"FieldComponent\">");
                 renderUIComponent(inputEntry);
-                w.write("</td>");
-                w.write("</tr>");
+                w.write("</div>");
+                w.write("</div>");
             }
         }
-        w.write("</table>");
+        w.write("</div>");
         w.write("</div>");
     }
 
