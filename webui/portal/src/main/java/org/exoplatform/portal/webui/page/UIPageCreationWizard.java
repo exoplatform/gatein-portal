@@ -146,6 +146,28 @@ public class UIPageCreationWizard extends UIPageWizard {
     }
 
     /**
+     *
+     * @return UserNode selectedNode
+     */
+    private UserNode reloadFullTreeNode(UserNode node) {
+        //. We need reload selectedPageNode without filter to load full navigation tree
+        try {
+            UserNode root = Util.getUIPortal().getSelectedUserNode();
+            while (root.getParent() != null) {
+                root = root.getParent();
+            }
+            if(root.getId().equals(node.getId())) {
+                return root;
+            }
+            return root.getChild(node.getName());
+        } catch (Exception ex) {
+
+        }
+
+        return node;
+    }
+
+    /**
      * Returns <code>true</code> if the creating node is existing already. Otherwise it returns <code>false</code>
      *
      * @return true if the creating node is existing, otherwise it's false
@@ -154,7 +176,7 @@ public class UIPageCreationWizard extends UIPageWizard {
     private boolean isSelectedNodeExist() {
         UIWizardPageSetInfo uiPageSetInfo = getChild(UIWizardPageSetInfo.class);
         String pageName = uiPageSetInfo.getUIStringInput(UIWizardPageSetInfo.PAGE_NAME).getValue();
-        UserNode selectedPageNode = uiPageSetInfo.getSelectedPageNode();
+        UserNode selectedPageNode = this.reloadFullTreeNode(uiPageSetInfo.getSelectedPageNode());
         if (selectedPageNode.getChild(pageName) != null) {
             return true;
         }
