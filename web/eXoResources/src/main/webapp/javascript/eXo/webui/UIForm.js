@@ -83,6 +83,15 @@
 	    }
 	
 	    form.elements['formOp'].value = action;
+	    if (form.textareaName) {
+		    var t = form.elements[form.textareaName];
+		    if (t) {
+			    t.style.display='block';
+			    t.style.visibility='visible';
+			    t.focus();
+			    t.style.display='none';
+		    }
+	    }
 	    if (useAjax)
 	      this.ajaxPost(form, callback);
 	    else
@@ -110,6 +119,15 @@
 	    if (!form.originalAction)
 	      form.originalAction = form.action;
 	    form.action = form.originalAction + encodeURI(params);
+	    if (form.textareaName) {
+		    var t = form.elements[form.textareaName];
+		    if (t) {
+			    t.style.display='block';
+			    t.style.visibility='visible';
+			    t.focus();
+			    t.style.display='none';
+		    }
+	    }	    
 	    this.ajaxPost(form);
 	  },
 	
