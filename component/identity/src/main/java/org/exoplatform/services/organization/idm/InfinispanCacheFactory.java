@@ -41,7 +41,6 @@ import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.picketlink.idm.cache.APICacheProvider;
 import org.picketlink.idm.impl.cache.InfinispanAPICacheProviderImpl;
-import org.picketlink.idm.impl.cache.InfinispanIdentityStoreCacheProviderImpl;
 import org.picketlink.idm.spi.cache.IdentityStoreCacheProvider;
 
 /**
