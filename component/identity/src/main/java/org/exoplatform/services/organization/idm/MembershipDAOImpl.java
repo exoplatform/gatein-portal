@@ -19,6 +19,8 @@
 
 package org.exoplatform.services.organization.idm;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,6 +43,7 @@ import org.gatein.common.logging.LogLevel;
 import org.picketlink.idm.api.IdentitySession;
 import org.picketlink.idm.api.Role;
 import org.picketlink.idm.api.RoleType;
+import org.picketlink.idm.common.exception.IdentityException;
 
 /*
  * @author <a href="mailto:boleslaw.dawidowicz at redhat.com">Boleslaw Dawidowicz</a>
@@ -172,7 +175,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
+            throw e;
         }
 
         if (hasRole) {
@@ -188,8 +191,14 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             try {
                 getIdentitySession().getRoleManager().createRole(m.getMembershipType(), m.getUserName(), groupId);
             } catch (Exception e) {
-                // TODO:
-                handleException("Identity operation error: ", e);
+                try {
+                    if (getIdentitySession().getRoleManager().getRole(m.getMembershipType(), m.getUserName(), groupId) != null) {
+                        getIdentitySession().getRoleManager().removeRole(m.getMembershipType(), m.getUserName(), groupId);
+                    }
+                } catch (IdentityException e1) {
+                    handleException("Cannot remove role: ", e1);
+                }
+                throw e;
 
             }
         }
@@ -197,9 +206,14 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             try {
                 getIdentitySession().getRelationshipManager().associateUserByKeys(groupId, m.getUserName());
             } catch (Exception e) {
-                // TODO:
-                handleException("Identity operation error: ", e);
-
+                try {
+                    if (getIdentitySession().getRelationshipManager().isAssociatedByKeys(groupId, m.getUserName())) {
+                        getIdentitySession().getRelationshipManager().disassociateUsersByKeys(groupId, new ArrayList<String>(Arrays.asList(m.getUserName())));
+                    }
+                } catch (IdentityException e1) {
+                    handleException("Cannot disassociate", e1);
+                }
+                throw e;
             }
         }
 
@@ -229,6 +243,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
+            throw e;
 
         }
 
@@ -239,6 +254,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
+            throw e;
         }
 
         if (!hasRole && !(isAssociationMapped() && getAssociationMapping().equals(m.getMembershipType()) && associated)) {
@@ -256,7 +272,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             } catch (Exception e) {
                 // TODO:
                 handleException("Identity operation error: ", e);
-
+                throw e;
             }
         }
 
@@ -268,7 +284,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             } catch (Exception e) {
                 // TODO:
                 handleException("Identity operation error: ", e);
-
+                throw e;
             }
         }
 
@@ -294,6 +310,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
+            throw e;
 
         }
 
@@ -328,6 +345,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             } catch (Exception e) {
                 // TODO:
                 handleException("Identity operation error: ", e);
+                throw e;
 
             }
 
@@ -340,7 +358,7 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
                 } catch (Exception e) {
                     // TODO:
                     handleException("Identity operation error: ", e);
-
+                    throw e;
                 }
             }
 
@@ -373,7 +391,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         if (isAssociationMapped() && getAssociationMapping().equals(type) && associated) {
@@ -387,7 +404,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         if (role != null
@@ -443,7 +459,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         HashSet<MembershipImpl> memberships = new HashSet<MembershipImpl>();
@@ -465,7 +480,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         if (isAssociationMapped() && associated) {
@@ -500,7 +514,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         HashSet<MembershipImpl> memberships = new HashSet<MembershipImpl>();
@@ -532,7 +545,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             } catch (Exception e) {
                 // TODO:
                 handleException("Identity operation error: ", e);
-
             }
 
             for (org.picketlink.idm.api.Group group : groups) {
@@ -603,7 +615,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         HashSet<MembershipImpl> memberships = new HashSet<MembershipImpl>();
@@ -629,7 +640,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
             } catch (Exception e) {
                 // TODO:
                 handleException("Identity operation error: ", e);
-
             }
 
             for (org.picketlink.idm.api.User user : users) {
@@ -681,7 +691,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         try {
@@ -696,7 +705,6 @@ public class MembershipDAOImpl extends AbstractDAOImpl implements MembershipHand
         } catch (Exception e) {
             // TODO:
             handleException("Identity operation error: ", e);
-
         }
 
         if (log.isTraceEnabled()) {
