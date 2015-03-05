@@ -94,7 +94,7 @@
 // Config param to load Opensocial data for social
 // preloads in data pipelining.  %host% will be
 // substituted with the current host.
-"gadgets.osDataUri" : "//%host%/social/rpc",
+"gadgets.osDataUri" : "http://%host%/social/rpc",
 
 "gadgets.signingKeyFile" : "oauthkey.pem",
 "gadgets.signingKeyName" : "exokey",
