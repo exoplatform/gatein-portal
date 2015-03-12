@@ -101,4 +101,6 @@
     <url-pattern>/exportimport/download</url-pattern>
   </servlet-mapping>
 
+  <absolute-ordering/>
+
 </web-app>
