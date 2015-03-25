@@ -99,7 +99,7 @@ public class EmailAddressValidator extends MultipleConditionsValidator {
     }
 
     private boolean isLocalPartSymbol(char c) {
-        return c == '-' || c == '_' || c == '.';
+        return c == '-' || c == '_' || c == '.' || c == '+';
     }
 
     private boolean isDomainNameSymbol(char c) {
