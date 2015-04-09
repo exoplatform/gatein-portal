@@ -27,6 +27,7 @@ import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.GroupHandler;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.web.application.AbstractApplicationMessage;
 import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
@@ -160,7 +161,21 @@ public class UIGroupManagement extends UIContainer {
             LocalPath localPath = uiBreadcumbs.getSelectLocalPath();
             if (localPath != null) {
                 String selectGroupId = uiBreadcumbs.getSelectLocalPath().getId();
-                uiGroupExplorer.changeGroup(selectGroupId);
+
+                UIApplication uiApp = event.getRequestContext().getUIApplication();
+                OrganizationService service = uiGroupExplorer.getApplicationComponent(OrganizationService.class);
+                GroupHandler gHandler = service.getGroupHandler();
+                Group g = gHandler.findGroupById(selectGroupId);
+                if(g == null) {
+                    uiApp.addMessage(new ApplicationMessage("UIGroupForm.msg.group-not-exist", new Object[]{selectGroupId}, AbstractApplicationMessage.ERROR));
+                    while(selectGroupId != null && !selectGroupId.isEmpty()) {
+                        if(gHandler.findGroupById(selectGroupId) != null) {
+                            break;
+                        }
+                        selectGroupId = selectGroupId.substring(0, selectGroupId.lastIndexOf('/'));
+                    }
+                }
+                uiGroupExplorer.changeGroup(selectGroupId == null || selectGroupId.isEmpty() ? null : selectGroupId);
             } else {
                 uiGroupExplorer.changeGroup(null);
             }
