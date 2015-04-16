@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.exoplatform.commons.serialization.api.annotations.Serialized;
 import org.exoplatform.commons.utils.EmptySerializablePageList;
-import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.commons.utils.PageList;
 import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.organization.Group;
@@ -36,6 +35,9 @@ import org.exoplatform.services.organization.MembershipHandler;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserHandler;
+import org.exoplatform.services.organization.GroupHandler;
+import org.exoplatform.web.application.AbstractApplicationMessage;
+import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
@@ -46,6 +48,7 @@ import org.exoplatform.webui.core.UIPageIterator;
 import org.exoplatform.webui.core.UIPopupWindow;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
+import org.exoplatform.webui.core.UIApplication;
 
 /**
  * Created by The eXo Platform SARL Author : chungnv nguyenchung136@yahoo.com Jun 23, 2006 10:07:15 AM
@@ -106,7 +109,34 @@ public class UIUserInGroup extends UIContainer {
     }
 
     public void refresh() throws Exception {
-        setValues(getSelectedGroup());
+        Group selectedGroup = getSelectedGroup();
+        OrganizationService service = getApplicationComponent(OrganizationService.class);
+        if(selectedGroup != null) {
+            String groupLabel = selectedGroup.getLabel();
+            String parentGroup = selectedGroup.getParentId();
+            GroupHandler gHandler = service.getGroupHandler();
+            selectedGroup = gHandler.findGroupById(selectedGroup.getId());
+            if(selectedGroup == null) {
+                UIApplication uiApp = Util.getPortalRequestContext().getUIApplication();
+                uiApp.addMessage(new ApplicationMessage("UIGroupForm.msg.group-not-exist", new Object[]{groupLabel}, AbstractApplicationMessage.WARNING));
+
+                // Select to parent group
+                String selectedId = parentGroup;
+                while(selectedId != null && !selectedId.isEmpty()) {
+                    if(gHandler.findGroupById(selectedId) != null) {
+                        break;
+                    } else {
+                        selectedId = selectedId.substring(0, selectedId.lastIndexOf('/'));
+                    }
+                }
+
+                UIOrganizationPortlet uiOrganizationPortlet = getAncestorOfType(UIOrganizationPortlet.class);
+                UIGroupManagement uiGroupManagement = uiOrganizationPortlet.findFirstComponentOfType(UIGroupManagement.class);
+                UIGroupExplorer uiGroupExplorer = uiGroupManagement.getChild(UIGroupExplorer.class);
+                uiGroupExplorer.changeGroup(selectedId == null || selectedId.isEmpty() ? null : selectedId);
+            }
+        }
+        setValues(selectedGroup);
     }
 
     public void setValues(Group group) throws Exception {

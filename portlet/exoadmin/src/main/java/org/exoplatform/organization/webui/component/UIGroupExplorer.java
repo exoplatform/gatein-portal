@@ -25,10 +25,14 @@ import java.util.List;
 
 import org.exoplatform.commons.serialization.api.annotations.Serialized;
 import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.GroupHandler;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.web.application.AbstractApplicationMessage;
+import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
+import org.exoplatform.webui.core.UIApplication;
 import org.exoplatform.webui.core.UIBreadcumbs;
 import org.exoplatform.webui.core.UIBreadcumbs.LocalPath;
 import org.exoplatform.webui.core.UIContainer;
@@ -179,7 +183,22 @@ public class UIGroupExplorer extends UIContainer {
         public void execute(Event<UITree> event) throws Exception {
             UIGroupExplorer uiGroupExplorer = event.getSource().getParent();
             String groupId = event.getRequestContext().getRequestParameter(OBJECTID);
-            uiGroupExplorer.changeGroup(groupId);
+
+            UIApplication uiApp = event.getRequestContext().getUIApplication();
+            OrganizationService service = uiGroupExplorer.getApplicationComponent(OrganizationService.class);
+            GroupHandler gHandler = service.getGroupHandler();
+            Group g = gHandler.findGroupById(groupId);
+            if(g == null) {
+                uiApp.addMessage(new ApplicationMessage("UIGroupForm.msg.group-not-exist", new Object[]{groupId}, AbstractApplicationMessage.WARNING));
+                while(groupId != null && !groupId.isEmpty()) {
+                    groupId = groupId.substring(0, groupId.lastIndexOf('/'));
+                    if(gHandler.findGroupById(groupId) != null) {
+                        break;
+                    }
+                }
+            }
+
+            uiGroupExplorer.changeGroup(groupId == null || groupId.isEmpty() ? null : groupId);
             UIGroupManagement uiGroupManagement = uiGroupExplorer.getParent();
             UIGroupDetail uiGroupDetail = uiGroupManagement.getChild(UIGroupDetail.class);
             uiGroupDetail.getChild(UIGroupForm.class).setGroup(null);
