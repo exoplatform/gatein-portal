@@ -184,16 +184,18 @@ public class UIGroupExplorer extends UIContainer {
             UIGroupExplorer uiGroupExplorer = event.getSource().getParent();
             String groupId = event.getRequestContext().getRequestParameter(OBJECTID);
 
-            UIApplication uiApp = event.getRequestContext().getUIApplication();
-            OrganizationService service = uiGroupExplorer.getApplicationComponent(OrganizationService.class);
-            GroupHandler gHandler = service.getGroupHandler();
-            Group g = gHandler.findGroupById(groupId);
-            if(g == null) {
-                uiApp.addMessage(new ApplicationMessage("UIGroupForm.msg.group-not-exist", new Object[]{groupId}, AbstractApplicationMessage.WARNING));
-                while(groupId != null && !groupId.isEmpty()) {
-                    groupId = groupId.substring(0, groupId.lastIndexOf('/'));
-                    if(gHandler.findGroupById(groupId) != null) {
-                        break;
+            if(groupId != null) {
+                UIApplication uiApp = event.getRequestContext().getUIApplication();
+                OrganizationService service = uiGroupExplorer.getApplicationComponent(OrganizationService.class);
+                GroupHandler gHandler = service.getGroupHandler();
+                Group g = gHandler.findGroupById(groupId);
+                if (g == null) {
+                    uiApp.addMessage(new ApplicationMessage("UIGroupForm.msg.group-not-exist", new Object[]{groupId}, AbstractApplicationMessage.WARNING));
+                    while (groupId != null && !groupId.isEmpty()) {
+                        groupId = groupId.substring(0, groupId.lastIndexOf('/'));
+                        if (gHandler.findGroupById(groupId) != null) {
+                            break;
+                        }
                     }
                 }
             }
