@@ -286,8 +286,13 @@ public class UITree extends UIComponent {
         StringBuilder builder = new StringBuilder();
 
         // if field's length > max field's length then cut field value
-        if ((fieldValue.length() > getMaxTitleCharacter()) && (getMaxTitleCharacter() != 0)) {
-            fieldValue = fieldValue.substring(0, getMaxTitleCharacter() - 3) + "...";
+        int maxTitleCharacter = getMaxTitleCharacter();
+        if ((fieldValue.length() > maxTitleCharacter) && (maxTitleCharacter != 0)) {
+          int lastSpace = fieldValue.indexOf(" ", maxTitleCharacter);
+            if (lastSpace > 0)
+              fieldValue= fieldValue.substring(0, lastSpace) + "...";
+            else
+              fieldValue = fieldValue.substring(0, getMaxTitleCharacter() - 3) + "...";
         }
 
         if (escapeHTML_) {
