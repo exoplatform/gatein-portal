@@ -22,6 +22,7 @@ package org.exoplatform.webui.core;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import org.exoplatform.commons.serialization.api.annotations.Serialized;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
@@ -286,14 +287,12 @@ public class UITree extends UIComponent {
         StringBuilder builder = new StringBuilder();
 
         // if field's length > max field's length then cut field value
+        fieldValue = StringEscapeUtils.unescapeHtml(fieldValue);
         int maxTitleCharacter = getMaxTitleCharacter();
         if ((fieldValue.length() > maxTitleCharacter) && (maxTitleCharacter != 0)) {
-          int lastSpace = fieldValue.indexOf(" ", maxTitleCharacter);
-          if (lastSpace > 0)
-            fieldValue= fieldValue.substring(0, lastSpace) + "...";
-          else
-            fieldValue = fieldValue.substring(0, getMaxTitleCharacter() - 3) + "...";
+          fieldValue = fieldValue.substring(0, getMaxTitleCharacter() - 3) + "...";
         }
+        fieldValue = StringEscapeUtils.escapeHtml(fieldValue);
 
         if (escapeHTML_) {
             fieldValue = fieldValue != null ? HTMLEntityEncoder.getInstance().encode(fieldValue) : fieldValue;
