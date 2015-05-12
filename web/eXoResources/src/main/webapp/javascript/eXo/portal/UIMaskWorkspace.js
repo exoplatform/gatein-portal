@@ -21,59 +21,74 @@
  * The mask layer, that appears when an ajax call waits for its result
  */
 
-(function(base, uiMaskLayer) {
+(function($, base, uiMaskLayer) {
 	
 	eXo.portal.UIMaskWorkspace = {
 	
 	  show : function(maskId, width, height) {
 	    this.maskWorkpace = document.getElementById(maskId);
+	    var content = $(this.maskWorkpace).find('.UIMaskWorkspace');
 	    if (this.maskWorkpace) {
 	      if (width > -1) {
-	        this.maskWorkpace.style.width = width + "px";
+	        content.width(width);
 	      }
 	
-	      if (eXo.portal.UIMaskWorkspace.maskLayer == null) {
-	        var maskLayer = uiMaskLayer.createMask("UIPortalApplication",
-	            this.maskWorkpace, 30);
-	        eXo.portal.UIMaskWorkspace.maskLayer = maskLayer;
-	      }
-	      this.maskWorkpace.style.margin = "auto";
-	      this.maskWorkpace.style.display = "block";
+	      document.body.style.overflow = 'hidden';
+        if (eXo.portal.UIMaskWorkspace.maskLayer == null) {
+          var maskLayer = uiMaskLayer.createMask("UIPortalApplication",
+              this.maskWorkpace, 30);
+          eXo.portal.UIMaskWorkspace.maskLayer = maskLayer;
+        }
+        this.maskWorkpace.style.margin = "auto";
+        this.maskWorkpace.style.display = "block";
+
+        var browser = base.Browser;
+        eXo.portal.UIMaskWorkspace.resetPositionEvt();
+        browser.addOnResizeCallback('mid_maskWorkspace',
+            eXo.portal.UIMaskWorkspace.resetPositionEvt);
+        // browser.addOnScrollCallback("setPosition_maskWorkspace",
+        // eXo.portal.UIMaskWorkspace.resetPositionEvt);
+      }
+    },
 	
-	      var browser = base.Browser; 
-	      browser.addOnResizeCallback('mid_maskWorkspace',
-	          eXo.portal.UIMaskWorkspace.resetPositionEvt);
-	      browser.addOnScrollCallback("setPosition_maskWorkspace", eXo.portal.UIMaskWorkspace.resetPositionEvt);
-	    }
-	  },
-	
-	  hide : function(maskId) {
-	    this.maskWorkpace = document.getElementById(maskId);
-	    if (eXo.portal.UIMaskWorkspace.maskLayer == undefined || !this.maskWorkpace) {
-	      return;
-	    }
-	    uiMaskLayer.removeMask(eXo.portal.UIMaskWorkspace.maskLayer);
-	    eXo.portal.UIMaskWorkspace.maskLayer = null;
-	    this.maskWorkpace.style.display = "none";
-	  },
+    hide : function(maskId) {
+      this.maskWorkpace = document.getElementById(maskId);
+      if (eXo.portal.UIMaskWorkspace.maskLayer == undefined
+          || !this.maskWorkpace) {
+        return;
+      }
+      uiMaskLayer.removeMask(eXo.portal.UIMaskWorkspace.maskLayer);
+      eXo.portal.UIMaskWorkspace.maskLayer = null;
+      this.maskWorkpace.style.display = "none";
+      document.body.style.overflow = 'auto';
+    },
 	
 	  /**
 	   * Resets the position of the mask calls eXo.core.uiMaskLayer.setPosition to
 	   * perform this operation
 	   */
-	  resetPositionEvt : function() {
-	    var maskWorkpace = eXo.portal.UIMaskWorkspace.maskWorkpace;
-	    if (maskWorkpace && (maskWorkpace.style.display == "block")) {
-	      try {
-	        uiMaskLayer.blockContainer = document
-	            .getElementById("UIPortalApplication");
-	        uiMaskLayer.object = maskWorkpace;
-	        uiMaskLayer.setPosition();
-	      } catch (e) {
-	      }
-	    }
-	  }
+    resetPositionEvt : function() {
+      var maskWorkpace = eXo.portal.UIMaskWorkspace.maskWorkpace;
+      if (maskWorkpace && (maskWorkpace.style.display == "block")) {
+        var maskHeight = $(maskWorkpace).height();
+        var content = $(maskWorkpace).find('.UIMaskWorkspace');
+        if (content.height() < maskHeight) {
+          content.css('margin-top', (maskHeight - content.height()) / 2);
+        } else {
+          content.css('margin-top', 0);
+        }
+        try {
+          uiMaskLayer.blockContainer = document
+              .getElementById("UIPortalApplication");
+          uiMaskLayer.object = maskWorkpace;
+          uiMaskLayer.setPosition();
+        } catch (e) {
+        }
+        maskWorkpace.style.position = 'fixed';
+        maskWorkpace.style.top = 0;
+      }
+    }
 	};
 	
 	return eXo.portal.UIMaskWorkspace;
-})(base, uiMaskLayer);
+})($, base, uiMaskLayer);
