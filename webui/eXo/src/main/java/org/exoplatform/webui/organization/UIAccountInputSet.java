@@ -78,7 +78,7 @@ public class UIAccountInputSet extends UIFormInputWithActions {
     }
 
     public String getUserName() {
-        return getUIStringInput(USERNAME).getValue();
+        return getUIStringInput(USERNAME).getValue().toLowerCase();
     }
 
     public String getPropertyPrefix() {
@@ -101,7 +101,7 @@ public class UIAccountInputSet extends UIFormInputWithActions {
             uiApp.addMessage(new ApplicationMessage("UIAccountForm.msg.password-is-not-match", null, ApplicationMessage.ERROR));
             return false;
         }
-        String username = getUIStringInput(USERNAME).getValue();
+        String username = getUserName();
         if (newUser) {
             User user = service.getUserHandler().createUserInstance(username);
             invokeSetBindingField(user);

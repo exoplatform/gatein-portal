@@ -127,7 +127,7 @@ public class LoginServlet extends AbstractHttpServlet {
         int status;
         if (req.getRemoteUser() == null) {
             if (username != null && password != null) {
-                Credentials credentials = new Credentials(username, password);
+                Credentials credentials = new Credentials(username.toLowerCase(), password);
                 ServletContainer container = ServletContainerFactory.getServletContainer();
 
                 // This will login or send an AuthenticationException

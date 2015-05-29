@@ -149,7 +149,7 @@ public class UIRegisterForm extends UIForm {
                 }
             }
 
-            String typedUsername = userNameInput.getValue();
+            String typedUsername = userNameInput.getValue().toLowerCase();
             WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
             UIApplication uiApp = context.getUIApplication();
             if (usernameIsUsed(typedUsername, orgService)) {

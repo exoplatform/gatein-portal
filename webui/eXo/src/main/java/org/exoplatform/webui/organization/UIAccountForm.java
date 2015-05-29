@@ -128,7 +128,7 @@ public class UIAccountForm extends UIFormTabPane {
                 }
             }
 
-            String userName = usernameInput.getValue();
+            String userName = usernameInput.getValue().toLowerCase();
             if (service.getUserHandler().findUserByName(userName) != null) {
                 uiApp.addMessage(new ApplicationMessage("UIAccountInputSet.msg.user-exist", null, ApplicationMessage.WARNING));
                 return;

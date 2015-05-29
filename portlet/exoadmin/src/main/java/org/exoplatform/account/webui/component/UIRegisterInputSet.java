@@ -110,7 +110,7 @@ public class UIRegisterInputSet extends UIFormInputWithActions {
     }
 
     private String getUserName() {
-        return getUIStringInput(USER_NAME).getValue();
+        return getUIStringInput(USER_NAME).getValue().toLowerCase();
     }
 
     private String getEmail() {
