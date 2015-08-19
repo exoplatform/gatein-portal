@@ -141,6 +141,8 @@
 	  
     addToWrapper : function(popup) {
       var $popup = $(popup);
+      if ($popup.parent().hasClass('wrapper')) return;
+      
       var $wrapper = $('<div class="wrapper"></div>');
       $wrapper.css({
         'zIndex' : ++eXo.webui.UIPopup.zIndex
@@ -152,7 +154,7 @@
 
     removeFromWrapper : function(popup) {
       var $popup = $(popup);
-      if ($popup.css('display') == 'none')
+      if ($popup.css('display') == 'none' || !$popup.parent().hasClass('wrapper'))
         return;
 
       var $wrapper = $popup.parent();
