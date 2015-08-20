@@ -308,11 +308,17 @@ public class UIUserSelector extends UIForm implements UIPopupComponent {
             }
             String[] arrItems = items.toArray(new String[items.size()]);
             Arrays.sort(arrItems);
-
+            OrganizationService service = uiForm.getApplicationComponent(OrganizationService.class);
             for (String key : arrItems) {
-                if (sb.toString() != null && sb.toString().trim().length() != 0)
-                    sb.append(",");
-                sb.append(key);
+              // check in case the selected user is disabled by administrator in another session
+              if (service.getUserHandler().findUserByName(key) == null) {
+                UIApplication uiApp = uiForm.getAncestorOfType(UIApplication.class);
+                uiApp.addMessage(new ApplicationMessage("UIUserSelector.msg.user-not-found", new Object[]{key} , ApplicationMessage.WARNING));
+                continue;
+              }
+              if (sb.toString() != null && sb.toString().trim().length() != 0)
+                sb.append(",");
+              sb.append(key);
             }
 
             uiForm.setSelectedUsers(sb.toString());
@@ -336,6 +342,14 @@ public class UIUserSelector extends UIForm implements UIPopupComponent {
         public void execute(Event<UIUserSelector> event) throws Exception {
             UIUserSelector uiForm = event.getSource();
             String userName = event.getRequestContext().getRequestParameter(OBJECTID);
+            OrganizationService service = uiForm.getApplicationComponent(OrganizationService.class);
+            // check in case the selected user is disabled by administrator in another session
+            if (service.getUserHandler().findUserByName(userName) == null) {
+              UIApplication uiApp = uiForm.getAncestorOfType(UIApplication.class);
+              uiApp.addMessage(new ApplicationMessage("UIUserSelector.msg.user-not-found", new Object[]{userName} , ApplicationMessage.WARNING));
+              uiForm.setSelectedUsers("");
+              return;
+            }
             uiForm.setSelectedUsers(userName);
             uiForm.<UIComponent> getParent().broadcast(event, event.getExecutionPhase());
         }
