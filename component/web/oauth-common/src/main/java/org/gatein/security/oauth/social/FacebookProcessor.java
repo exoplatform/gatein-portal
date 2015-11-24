@@ -189,7 +189,7 @@ public class FacebookProcessor {
 
             @Override
             protected URL createURL(String accessToken) throws IOException {
-                String urlString = new StringBuilder(FacebookConstants.PROFILE_ENDPOINT_URL).append("?access_token=")
+                String urlString = new StringBuilder(FacebookConstants.PROFILE_ENDPOINT_URL).append("?fields=id,email,first_name,last_name,name,gender,timezone,locale").append("&access_token=")
                         .append(URLEncoder.encode(accessToken, "UTF-8")).toString();
                 if (trace)
                     log.trace("Profile read:" + urlString);
