@@ -60,7 +60,8 @@ public final class CharsetTextEncoder implements TextEncoder {
             byte[] bytes = charEncoder.encode(c);
             switch (bytes.length) {
                 case 0:
-                    throw new AssertionError();
+                    // ignore empty result (malformed input)
+                    break;
                 case 1:
                     out.write(bytes[0]);
                     break;

@@ -35,6 +35,11 @@ public class TestTextEncoder extends AbstractGateInTest {
 
     public void testA() throws IOException {
         assertOK("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        // check if ignore malformed input
+        String malformedInput = new String(new byte[]{(byte) 0xF0, (byte) 0x9F, (byte) 0x98, (byte) 0x80});
+        assertOK("hello you", "hello " + malformedInput + "you");
+
         /*
          * assertOK("<>&\"\\=+");
          *
@@ -49,24 +54,28 @@ public class TestTextEncoder extends AbstractGateInTest {
          */
     }
 
-    private void assertOK(String s) throws IOException {
+    private void assertOK(String expectedAndActual) throws IOException {
+        assertOK(expectedAndActual, expectedAndActual);
+    }
+
+    private void assertOK(String expected, String actual) throws IOException {
         TextEncoder encoder = CharsetTextEncoder.getUTF8();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        encoder.encode(s, 0, s.length(), baos);
+        encoder.encode(actual, 0, actual.length(), baos);
         baos.flush();
         byte[] b1 = baos.toByteArray();
 
         //
         baos.reset();
         OutputStreamWriter osw = new OutputStreamWriter(baos);
-        osw.write(s);
+        osw.write(expected);
         osw.close();
         byte[] b2 = baos.toByteArray();
 
         //
-        List<Byte> expected = toList(b2);
-        List<Byte> actual = toList(b1);
-        assertEquals(expected, actual);
+        List<Byte> expectedBytes = toList(b2);
+        List<Byte> actualBytes = toList(b1);
+        assertEquals(expectedBytes, actualBytes);
     }
 
     private List<Byte> toList(byte[] bytes) {
