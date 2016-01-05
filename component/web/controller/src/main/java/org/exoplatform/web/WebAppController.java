@@ -334,11 +334,13 @@ public class WebAppController implements Startable {
                             if (!started && handler.getRequiresLifeCycle()) {
                                 started = true;
                                 ExoContainer container = ExoContainerContext.getCurrentContainer();
-                                if (debug && !(container instanceof PortalContainer)) {
-                                  log.debug("Starting RequestLifeCycle for handler " + handler);
-
-                                  //We need this log to trace the issue for TA-423 if the bug still happen
-                                  log.debug("current container is " + container + ", it should be a PortalContainer instance to start a portal request lifecycle");                                    
+                                if (debug) {
+                                    log.debug("Starting RequestLifeCycle for handler " + handler);
+  
+                                    if (!(container instanceof PortalContainer)) {
+                                        //We need this log to trace the issue for TA-423 if the bug still happen
+                                        log.debug("current container is " + container + ", it should be a PortalContainer instance to start a portal request lifecycle");                                    
+                                    }
                                 }
                                 RequestLifeCycle.begin(container);
                             }
