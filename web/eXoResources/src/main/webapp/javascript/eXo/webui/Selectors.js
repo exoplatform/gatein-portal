@@ -255,6 +255,15 @@
 		   if(language == undefined) {
 			   language = "";
 		   }
+		   if (url.lastIndexOf("search?") != -1) {
+			   var searchUrl = $.ajaxSettings['url'];
+			   var index = searchUrl.indexOf("&portal:");
+			   if (index == -1) {
+				   index = searchUrl.length;
+			   }
+			   var searchParams = searchUrl.substring(searchUrl.lastIndexOf("search?"), index);
+			   url = url.replace("search?", searchParams + "&");
+		   }
 		   window.location = url + "&language=" + language;
 		}
 	};
