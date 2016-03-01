@@ -23,9 +23,7 @@ package org.exoplatform.portal.application.localization;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -45,10 +43,9 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.services.resources.LocaleConfig;
-import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.resources.LocaleContextInfo;
 import org.exoplatform.services.resources.LocalePolicy;
+import org.exoplatform.services.security.ConversationState;
 
 /**
  * This filter provides {@link HttpServletRequest#getLocale()} and {@link HttpServletRequest#getLocales()} override for
@@ -80,6 +77,7 @@ import org.exoplatform.services.resources.LocalePolicy;
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
 public class LocalizationFilter extends AbstractFilter {
+    private static final String LOCALE_SESSION_ATTR = "user.locale";
     private static Log log = ExoLogger.getLogger("portal:LocalizationFilter");
 
     private static ThreadLocal<Locale> currentLocale = new ThreadLocal<Locale>();
@@ -101,6 +99,8 @@ public class LocalizationFilter extends AbstractFilter {
         HttpServletResponse res = (HttpServletResponse) response;
 
         try {
+            // context is null in normal HTTP requests because it's not yet built
+            // It is not null in case of include or forwad using dispatcher
             // Due to forwards, and includes the filter might be reentered
             // If current requestContext exists use its Locale
             PortalRequestContext context = PortalRequestContext.getCurrentInstance();
@@ -122,6 +122,21 @@ public class LocalizationFilter extends AbstractFilter {
                 return;
             }
 
+            ConversationState state = ConversationState.getCurrent();
+            if(state != null) {
+              Locale locale = DefaultLocalePolicyService.getLocaleFromState(state);
+              // FIXME workaround of COR-357
+              if (locale == null && req.getRemoteUser() == null) {
+                locale = (Locale) req.getSession().getAttribute(LOCALE_SESSION_ATTR);
+              }
+              // End workaround
+              if(locale != null) {
+                currentLocale.set(locale);
+                chain.doFilter(request, response);
+                return;
+              }
+            }
+
             // Initialize currentLocale
             ExoContainer container = getContainer();
             if (container == null) {
@@ -130,36 +145,27 @@ public class LocalizationFilter extends AbstractFilter {
                 return;
             }
 
-            LocaleConfigService localeConfigService = (LocaleConfigService) container
-                    .getComponentInstanceOfType(LocaleConfigService.class);
             LocalePolicy localePolicy = (LocalePolicy) container.getComponentInstanceOfType(LocalePolicy.class);
 
             LocaleContextInfo localeCtx = new LocaleContextInfo();
-
-            Set<Locale> supportedLocales = new HashSet();
-            for (LocaleConfig lc : localeConfigService.getLocalConfigs()) {
-                supportedLocales.add(lc.getLocale());
-            }
-            localeCtx.setSupportedLocales(supportedLocales);
-
-            localeCtx.setBrowserLocales(Collections.list(request.getLocales()));
-            localeCtx.setCookieLocales(LocalizationLifecycle.getCookieLocales(req));
-            localeCtx.setSessionLocale(LocalizationLifecycle.getSessionLocale(req));
-            localeCtx.setUserProfileLocale(getUserProfileLocale(container, req.getRemoteUser()));
             localeCtx.setRemoteUser(req.getRemoteUser());
 
-            localeCtx.setPortalLocale(checkPortalLocaleSupported(portalLocale, supportedLocales));
-            Locale locale = localePolicy.determineLocale(localeCtx);
-            boolean supported = supportedLocales.contains(locale);
+            // First locale to check
+            Locale userProfileLocale = getUserProfileLocale(container, req.getRemoteUser());
+            localeCtx.setUserProfileLocale(userProfileLocale);
+            // Second locale to check
+            localeCtx.setBrowserLocales(Collections.list(request.getLocales()));
+            // Third locale to check
+            localeCtx.setPortalLocale(portalLocale);
 
-            if (!supported && !"".equals(locale.getCountry())) {
-                locale = new Locale(locale.getLanguage());
-                supported = supportedLocales.contains(locale);
-            }
-            if (!supported) {
-                if (log.isWarnEnabled())
-                    log.warn("Unsupported locale returned by LocalePolicy: " + localePolicy + ". Falling back to 'en'.");
-                locale = Locale.ENGLISH;
+            Locale locale = localePolicy.determineLocale(localeCtx);
+
+            if (userProfileLocale == null && req.getRemoteUser() != null) {
+              setUserProfileLocale(container, req.getRemoteUser(), locale.getLanguage());
+            } else if(req.getRemoteUser() == null) {
+              // FIXME workaround of COR-357
+              req.getSession().setAttribute(LOCALE_SESSION_ATTR, locale);
+              // End workaround
             }
 
             currentLocale.set(locale);
@@ -169,25 +175,6 @@ public class LocalizationFilter extends AbstractFilter {
         } finally {
             currentLocale.remove();
         }
-    }
-
-    private Locale checkPortalLocaleSupported(Locale portalLocale, Set<Locale> supportedLocales) {
-        if (supportedLocales.contains(portalLocale))
-            return portalLocale;
-        if ("".equals(portalLocale.getCountry()) == false) {
-            Locale loc = new Locale(portalLocale.getLanguage());
-            if (supportedLocales.contains(loc)) {
-                log.warn("portalLocale not supported: " + LocaleContextInfo.getLocaleAsString(portalLocale)
-                        + ". Falling back to '" + portalLocale.getLanguage() + "'.");
-                this.portalLocale = loc;
-                return loc;
-            }
-        }
-
-        log.warn("portalLocale not supported: " + LocaleContextInfo.getLocaleAsString(portalLocale)
-                + ". Falling back to Locale.ENGLISH.");
-        this.portalLocale = Locale.ENGLISH;
-        return portalLocale;
     }
 
     private Locale getUserProfileLocale(ExoContainer container, String user) {
@@ -214,6 +201,33 @@ public class LocalizationFilter extends AbstractFilter {
 
         String lang = userProfile == null ? null : userProfile.getUserInfoMap().get(Constants.USER_LANGUAGE);
         return (lang != null) ? LocaleContextInfo.getLocale(lang) : null;
+    }
+
+    private void setUserProfileLocale(ExoContainer container, String user, String language) {
+      if (user == null) {
+        return;
+      }
+  
+      OrganizationService svc = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
+      try {
+        beginContext(svc);
+        UserProfile userProfile = svc.getUserProfileHandler().findUserProfileByName(user);
+        if(userProfile != null) {
+          String lang = userProfile.getAttribute(Constants.USER_LANGUAGE);
+          if(lang == null || !language.equals(lang)) {
+            userProfile.setAttribute(Constants.USER_LANGUAGE, language);
+            svc.getUserProfileHandler().saveUserProfile(userProfile, false);
+          }
+        }
+      } catch (Exception ignored) {
+        log.error("IGNORED: Failed to load UserProfile for username: " + user, ignored);
+      } finally {
+        try {
+          endContext(svc);
+        } catch (Exception ignored) {
+          // we don't care
+        }
+      }
     }
 
     public void beginContext(OrganizationService orgService) {

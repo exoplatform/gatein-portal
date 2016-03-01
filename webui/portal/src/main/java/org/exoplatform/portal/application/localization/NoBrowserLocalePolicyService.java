@@ -23,6 +23,7 @@ package org.exoplatform.portal.application.localization;
 
 import java.util.Locale;
 
+import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.resources.LocaleContextInfo;
 
 /**
@@ -32,6 +33,11 @@ import org.exoplatform.services.resources.LocaleContextInfo;
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
 public class NoBrowserLocalePolicyService extends DefaultLocalePolicyService {
+  
+  public NoBrowserLocalePolicyService(LocaleConfigService localeConfigService) {
+    super(localeConfigService);
+  }
+  
     /**
      * Override super method with no-op.
      *

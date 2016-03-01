@@ -49,6 +49,7 @@ import org.exoplatform.services.resources.LocaleConfig;
 import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.resources.LocaleContextInfo;
 import org.exoplatform.services.resources.LocalePolicy;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.web.application.Application;
 import org.exoplatform.web.application.ApplicationRequestPhaseLifecycle;
 import org.exoplatform.web.application.Phase;
@@ -104,59 +105,75 @@ public class LocalizationLifecycle implements ApplicationRequestPhaseLifecycle<W
             throw new IllegalArgumentException("Expected PortalRequestContext, but got: " + context);
 
         PortalRequestContext reqCtx = (PortalRequestContext) context;
-        ExoContainer container = app.getApplicationServiceContainer();
+        Locale locale = null;
 
-        LocaleConfigService localeConfigService = (LocaleConfigService) container
-                .getComponentInstanceOfType(LocaleConfigService.class);
-        LocalePolicy localePolicy = (LocalePolicy) container.getComponentInstanceOfType(LocalePolicy.class);
-
-        LocaleContextInfo localeCtx = new LocaleContextInfo();
-
-        Set<Locale> supportedLocales = new HashSet<Locale>();
-        for (LocaleConfig lc : localeConfigService.getLocalConfigs()) {
-            supportedLocales.add(lc.getLocale());
-        }
-        localeCtx.setSupportedLocales(supportedLocales);
-
-        HttpServletRequest request = HttpServletRequest.class.cast(context.getRequest());
-        localeCtx.setBrowserLocales(Collections.list(request.getLocales()));
-        localeCtx.setCookieLocales(getCookieLocales(request));
-        localeCtx.setSessionLocale(getSessionLocale(request));
-        localeCtx.setUserProfileLocale(getUserProfileLocale(reqCtx));
-        localeCtx.setRemoteUser(reqCtx.getRemoteUser());
-
-        DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
-        PortalConfig pConfig = null;
-        try {
-            pConfig = dataStorage.getPortalConfig(SiteType.PORTAL.getName(), reqCtx.getPortalOwner());
-            if (pConfig == null)
-                log.warn("No UserPortalConfig available! Portal locale set to 'en'");
-        } catch (Exception ignored) {
-            if (log.isDebugEnabled())
-                log.debug("IGNORED: Failed to load UserPortalConfig: ", ignored);
+        Locale cachedLocale = null;
+        ConversationState state = ConversationState.getCurrent();
+        if(state != null && state.getAttribute(Constants.USER_LANGUAGE) != null) {
+          cachedLocale = (Locale) state.getAttribute(Constants.USER_LANGUAGE);
         }
 
-        String portalLocaleName = "en";
-        if (pConfig != null)
-            portalLocaleName = pConfig.getLocale();
-
-        Locale portalLocale = LocaleContextInfo.getLocale(portalLocaleName);
-        localeCtx.setPortalLocale(portalLocale);
-
-        localeCtx.setRequestLocale(reqCtx.getRequestLocale());
-
-        Locale locale = localePolicy.determineLocale(localeCtx);
-        boolean supported = supportedLocales.contains(locale);
-
-        if (!supported && !"".equals(locale.getCountry())) {
-            locale = new Locale(locale.getLanguage());
-            supported = supportedLocales.contains(locale);
+        if(reqCtx.getRequestLocale() == null || (cachedLocale != null && cachedLocale.equals(reqCtx.getRequestLocale()))) {
+          locale = cachedLocale;
         }
-        if (!supported) {
-            if (log.isWarnEnabled())
-                log.warn("Unsupported locale returned by LocalePolicy: " + localePolicy + ". Falling back to 'en'.");
-            locale = Locale.ENGLISH;
+
+        if(locale == null) {
+          ExoContainer container = app.getApplicationServiceContainer();
+
+          LocaleConfigService localeConfigService = (LocaleConfigService) container
+                  .getComponentInstanceOfType(LocaleConfigService.class);
+          LocalePolicy localePolicy = (LocalePolicy) container.getComponentInstanceOfType(LocalePolicy.class);
+  
+          LocaleContextInfo localeCtx = new LocaleContextInfo();
+  
+          Set<Locale> supportedLocales = new HashSet<Locale>();
+          for (LocaleConfig lc : localeConfigService.getLocalConfigs()) {
+              supportedLocales.add(lc.getLocale());
+          }
+          localeCtx.setSupportedLocales(supportedLocales);
+  
+          HttpServletRequest request = HttpServletRequest.class.cast(context.getRequest());
+          localeCtx.setBrowserLocales(Collections.list(request.getLocales()));
+          localeCtx.setCookieLocales(getCookieLocales(request));
+          localeCtx.setSessionLocale(getSessionLocale(request));
+          localeCtx.setUserProfileLocale(getUserProfileLocale(reqCtx));
+          localeCtx.setRemoteUser(reqCtx.getRemoteUser());
+  
+          DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+          PortalConfig pConfig = null;
+          try {
+              pConfig = dataStorage.getPortalConfig(SiteType.PORTAL.getName(), reqCtx.getPortalOwner());
+              if (pConfig == null)
+                  log.warn("No UserPortalConfig available! Portal locale set to 'en'");
+          } catch (Exception ignored) {
+              if (log.isDebugEnabled())
+                  log.debug("IGNORED: Failed to load UserPortalConfig: ", ignored);
+          }
+  
+          String portalLocaleName = Locale.getDefault().getLanguage();
+          if (pConfig != null)
+              portalLocaleName = pConfig.getLocale();
+  
+          Locale portalLocale = LocaleContextInfo.getLocale(portalLocaleName);
+          localeCtx.setPortalLocale(portalLocale);
+  
+          localeCtx.setRequestLocale(reqCtx.getRequestLocale());
+  
+          locale = localePolicy.determineLocale(localeCtx);
+
+          boolean supported = supportedLocales.contains(locale);
+
+          if (!supported && !"".equals(locale.getCountry())) {
+              locale = new Locale(locale.getLanguage());
+              supported = supportedLocales.contains(locale);
+          }
+          if (!supported) {
+              if (log.isWarnEnabled())
+                  log.warn("Unsupported locale returned by LocalePolicy: " + localePolicy + ". Falling back to 'en'.");
+              locale = Locale.ENGLISH;
+          }
         }
+
         reqCtx.setLocale(locale);
         calculatedLocale.set(locale);
         resetOrientation(reqCtx, locale);
@@ -300,6 +317,14 @@ public class LocalizationLifecycle implements ApplicationRequestPhaseLifecycle<W
         }
 
         saveSessionLocale(context, loc);
+        
+        saveLocaleToConversationState(context);
+    }
+
+    private void saveLocaleToConversationState(PortalRequestContext context) {
+      // Update in all user's conversation states the new locale
+      ConversationState currentState = ConversationState.getCurrent();
+      currentState.setAttribute(Constants.USER_LANGUAGE, context.getLocale());
     }
 
     private void resetOrientation(PortalRequestContext context, Locale loc) {

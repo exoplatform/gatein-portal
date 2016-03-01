@@ -21,11 +21,28 @@
  */
 package org.exoplatform.portal.application.localization;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.component.ComponentRequestLifecycle;
+import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.portal.Constants;
+import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.UserPortalConfigService;
+import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.resources.LocaleConfig;
+import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.resources.LocaleContextInfo;
 import org.exoplatform.services.resources.LocalePolicy;
+import org.exoplatform.services.security.ConversationState;
 import org.picocontainer.Startable;
 
 /**
@@ -47,12 +64,70 @@ import org.picocontainer.Startable;
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
 public class DefaultLocalePolicyService implements LocalePolicy, Startable {
+
+  private static Log log = ExoLogger.getLogger(DefaultLocalePolicyService.class);
+
+  private LocaleConfigService localeConfigService;
+
+  public DefaultLocalePolicyService(LocaleConfigService localeConfigService) {
+    this.localeConfigService = localeConfigService;
+  }
+
+  public static Locale determineLocale(ExoContainer container, String userId) {
+    ConversationState currentState = ConversationState.getCurrent();
+    if (userId != null && currentState != null && userId.equals(currentState.getIdentity().getUserId())) {
+      Locale locale = getLocaleFromState(currentState);
+      if (locale != null) {
+        return locale;
+      }
+    }
+    Locale locale = getUserProfileLocale(container, userId);
+    if (locale != null) {
+      return locale;
+    }
+
+    locale = Locale.getDefault();
+
+    DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+    UserPortalConfigService portalConfigService = (UserPortalConfigService) container.getComponentInstanceOfType(UserPortalConfigService.class);
+    PortalConfig pConfig = null;
+    try {
+        pConfig = dataStorage.getPortalConfig(SiteType.PORTAL.getName(), portalConfigService.getDefaultPortal());
+        if (pConfig == null) {
+            log.warn("No UserPortalConfig available! Portal locale set to 'en'");
+        } else {
+          locale = new Locale(pConfig.getLocale());
+        }
+    } catch (Exception ignored) {
+        if (log.isDebugEnabled())
+            log.debug("IGNORED: Failed to load UserPortalConfig: ", ignored);
+    }
+
+    return locale;
+  }
+
     /**
      * @see LocalePolicy#determineLocale(LocaleContextInfo)
      */
     public Locale determineLocale(LocaleContextInfo context) {
         if (context.getRequestLocale() != null) {
             return context.getRequestLocale();
+        }
+
+        ConversationState currentState = ConversationState.getCurrent();
+        if (context.getRemoteUser() != null && currentState != null) {
+          Locale locale = getLocaleFromState(currentState);
+          if (locale != null) {
+            return locale;
+          }
+        }
+
+        if(context.getSupportedLocales() == null) {
+          Set<Locale> supportedLocales = new HashSet<Locale>();
+          for (LocaleConfig lc : localeConfigService.getLocalConfigs()) {
+              supportedLocales.add(lc.getLocale());
+          }
+          context.setSupportedLocales(supportedLocales);
         }
 
         //
@@ -62,10 +137,27 @@ public class DefaultLocalePolicyService implements LocalePolicy, Startable {
         else
             locale = getLocaleConfigForRegistered(context);
 
-        if (locale == null)
-            locale = context.getPortalLocale();
+        if (locale == null) {
+            locale = context.getLocaleIfLangSupported(context.getPortalLocale());
+            if (locale == null) {
+              log.warn("Unsupported PortalConfig locale: " + context.getPortalLocale() + ". Falling back to default JVM locale.");
+              locale = Locale.getDefault();
+            }
+        }
+
+        if(currentState !=null) {
+          currentState.setAttribute(Constants.USER_LANGUAGE, locale);
+        }
 
         return locale;
+    }
+
+    public static Locale getLocaleFromState(ConversationState state) {
+      Locale locale = (Locale) state.getAttribute(Constants.USER_LANGUAGE);
+      if(locale != null) {
+        return locale;
+      }
+      return null;
     }
 
     /**
@@ -158,6 +250,46 @@ public class DefaultLocalePolicyService implements LocalePolicy, Startable {
      * Starter interface method
      */
     public void stop() {
+    }
+
+    private static Locale getUserProfileLocale(ExoContainer container, String user) {
+      UserProfile userProfile = null;
+      OrganizationService svc = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
+
+      if (user != null) {
+          try {
+              beginContext(svc);
+              userProfile = svc.getUserProfileHandler().findUserProfileByName(user);
+          } catch (Exception ignored) {
+              log.error("IGNORED: Failed to load UserProfile for username: " + user, ignored);
+          } finally {
+              try {
+                  endContext(svc);
+              } catch (Exception ignored) {
+                  // we don't care
+              }
+          }
+
+          if (userProfile == null && log.isDebugEnabled())
+              log.debug("Could not load user profile for " + user);
+      }
+
+      String lang = userProfile == null ? null : userProfile.getUserInfoMap().get(Constants.USER_LANGUAGE);
+      return (lang != null) ? LocaleContextInfo.getLocale(lang) : null;
+  }
+
+    public static void beginContext(OrganizationService orgService) {
+        if (orgService instanceof ComponentRequestLifecycle) {
+            RequestLifeCycle.begin((ComponentRequestLifecycle) orgService);
+        }
+    }
+
+    public static void endContext(OrganizationService orgService) {
+        // do the same check as in beginContext to make it symmetric
+        if (orgService instanceof ComponentRequestLifecycle) {
+            RequestLifeCycle.end();
+        }
+        
     }
 
 }

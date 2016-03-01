@@ -166,15 +166,6 @@
   -->
 
   <filter-mapping>
-    <filter-name>LocalizationFilter</filter-name>
-    <url-pattern>*.jsp</url-pattern>
-    <dispatcher>INCLUDE</dispatcher>
-    <dispatcher>FORWARD</dispatcher>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>ERROR</dispatcher>
-  </filter-mapping>
-
-  <filter-mapping>
     <filter-name>ResourceRequestFilter</filter-name>
     <url-pattern>*.gif</url-pattern>
   </filter-mapping>
@@ -201,6 +192,11 @@
 
   <filter-mapping>
     <filter-name>ConversationStateUpdateFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <filter-mapping>
+    <filter-name>LocalizationFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
