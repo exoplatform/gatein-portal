@@ -270,7 +270,7 @@ public class UserPortalConfigService implements Startable {
         return list;
     }
     /**
-     * Returns a boolean according to if the user has at least one makable navigation i.e if he
+     * Returns a boolean hasNav according to if the user has at least one makable navigation i.e if he
      * belongs to at least one group
      * @param remoteUser the user to get the makable navigations
      * @return true or false
@@ -278,14 +278,21 @@ public class UserPortalConfigService implements Startable {
      */
        public boolean hasMakableNavigations(String remoteUser) throws Exception{
            Collection<Group> groups;
-           boolean hasNav = false;
-           if (remoteUser.equals(userACL_.getSuperUser())) {
+           boolean hasNav;
+           if (remoteUser == null) {
+			   hasNav = false;
+			   }
+           else if (remoteUser.equals(userACL_.getSuperUser())) {
                hasNav = true; // as the super user is member of all groups
            } else {
                groups = orgService_.getGroupHandler().resolveGroupByMembership(remoteUser, userACL_.getMakableMT());
                if (groups != null) {
                    hasNav = true;
                }
+               // if groups is null then havNav is false as the remoteUser did not have any navigation
+               else {
+				   hasNav = false;
+				    }            
            }
            return hasNav;
        }
