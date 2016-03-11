@@ -276,26 +276,23 @@ public class UserPortalConfigService implements Startable {
      * @return true or false
      * @throws Exception any exception
      */
-       public boolean hasMakableNavigations(String remoteUser) throws Exception{
-           Collection<Group> groups;
-           boolean hasNav;
-           if (remoteUser == null) {
-			   hasNav = false;
-			   }
-           else if (remoteUser.equals(userACL_.getSuperUser())) {
-               hasNav = true; // as the super user is member of all groups
-           } else {
-               groups = orgService_.getGroupHandler().resolveGroupByMembership(remoteUser, userACL_.getMakableMT());
-               if (groups != null) {
-                   hasNav = true;
-               }
-               // if groups is null then havNav is false as the remoteUser did not have any navigation
-               else {
-				   hasNav = false;
-				    }            
-           }
-           return hasNav;
-       }
+    public boolean hasMakableNavigations(String remoteUser) throws Exception{
+        Collection<Group> groups;
+        boolean hasNav;
+        if (remoteUser == null) {
+			hasNav = false;
+		}
+        else if (remoteUser.equals(userACL_.getSuperUser())) {
+            hasNav = true; // as the super user is member of all groups
+        }    
+            else{
+			   groups = orgService_.getGroupHandler().resolveGroupByMembership(remoteUser, userACL_.getMakableMT());
+               hasNav = (groups != null && groups.size() > 0);
+            } 
+            
+                          
+        return hasNav;
+    }
     /**
      * Create a user site for the specified user. It will perform the following:
      * <ul>

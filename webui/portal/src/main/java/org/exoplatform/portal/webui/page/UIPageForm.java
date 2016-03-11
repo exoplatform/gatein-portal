@@ -208,9 +208,9 @@ public class UIPageForm extends UIFormTabPane {
 
         UserPortalConfigService userPortalConfigService = getApplicationComponent(UserPortalConfigService.class);
         Boolean hasNav = userPortalConfigService.hasMakableNavigations(pcontext.getRemoteUser());
-         if (hasNav ==true) {
+        if (hasNav) {
 			 ownerTypes.add(new SelectItemOption<String>(SiteType.GROUP.getName()));
-			 }
+		}
 
         ownerTypes.add(new SelectItemOption<String>(SiteType.USER.getName()));
         UIFormSelectBox uiSelectBoxOwnerType = new UIFormSelectBox(OWNER_TYPE, OWNER_TYPE, ownerTypes);
