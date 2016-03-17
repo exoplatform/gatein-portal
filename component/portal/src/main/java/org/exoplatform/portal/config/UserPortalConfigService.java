@@ -273,24 +273,35 @@ public class UserPortalConfigService implements Startable {
      * Returns a boolean hasNav according to if the user has at least one makable navigation i.e if he
      * belongs to at least one group
      * @param remoteUser the user to get the makable navigations
+     * @param withSite whether or not check if siteConfig exists.
      * @return true or false
      * @throws Exception any exception
      */
-    public boolean hasMakableNavigations(String remoteUser) throws Exception{
+    public boolean hasMakableNavigations(String remoteUser, boolean withSite) throws Exception{
         Collection<Group> groups;
-        boolean hasNav;
+        boolean hasNav = false;
         if (remoteUser == null) {
-			hasNav = false;
-		}
-        else if (remoteUser.equals(userACL_.getSuperUser())) {
+            hasNav = false;
+        } else if (remoteUser.equals(userACL_.getSuperUser())) {
             hasNav = true; // as the super user is member of all groups
-        }    
-            else{
-			   groups = orgService_.getGroupHandler().resolveGroupByMembership(remoteUser, userACL_.getMakableMT());
-               hasNav = (groups != null && groups.size() > 0);
-            } 
-            
-                          
+        } else {
+            groups = orgService_.getGroupHandler().resolveGroupByMembership(remoteUser,
+                                                                            userACL_.getMakableMT());
+              if (groups != null && groups.size() > 0) {
+                  if (withSite) {
+                      for (Group group : groups) {
+                        PortalConfig cfg = storage_.getPortalConfig(PortalConfig.GROUP_TYPE, group.getId());
+                        if (cfg != null) {
+                          hasNav = true;
+                          break;
+                        }
+                      }
+                  } else {
+                      hasNav = true;
+                  }
+              }
+        }
+
         return hasNav;
     }
     /**
