@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gatein.portal</groupId>
     <artifactId>exo.portal.parent</artifactId>
-    <version>4.3.1-M06-PLF</version>
+    <version>4.3.x-PLF-SNAPSHOT</version>
   </parent>
 
   <groupId>org.gatein.portal</groupId>
