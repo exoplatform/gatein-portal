@@ -32,12 +32,12 @@ import org.exoplatform.services.resources.LocaleContextInfo;
  *
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
  */
-public class NoBrowserLocalePolicyService extends DefaultLocalePolicyService {
-  
+public class NoBrowserLocalePolicyService extends CommonLocalePolicyService {
+
   public NoBrowserLocalePolicyService(LocaleConfigService localeConfigService) {
     super(localeConfigService);
   }
-  
+
     /**
      * Override super method with no-op.
      *

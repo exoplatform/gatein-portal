@@ -124,7 +124,7 @@ public class LocalizationFilter extends AbstractFilter {
 
             ConversationState state = ConversationState.getCurrent();
             if(state != null) {
-              Locale locale = DefaultLocalePolicyService.getLocaleFromState(state);
+              Locale locale = CommonLocalePolicyService.getLocaleFromState(state);
               // FIXME workaround of COR-357
               if (locale == null && req.getRemoteUser() == null) {
                 locale = (Locale) req.getSession().getAttribute(LOCALE_SESSION_ATTR);
