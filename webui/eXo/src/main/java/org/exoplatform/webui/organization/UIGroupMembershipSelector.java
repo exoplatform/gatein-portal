@@ -46,6 +46,7 @@ import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.Event.Phase;
 import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.form.UIForm;
+import org.exoplatform.portal.webui.util.Util;
 
 /** Author : Nhu Dinh Thuan nhudinhthuan@exoplatform.com Jun 27, 2006 */
 @ComponentConfigs({
@@ -61,6 +62,9 @@ public class UIGroupMembershipSelector extends UIContainer {
     private Group selectGroup_;
 
     private List<String> listMemberhip;
+
+    //--- List to hold user's groups to display
+    private List allSpaceGroups = null;
 
     public UIGroupMembershipSelector() throws Exception {
         UIBreadcumbs uiBreadcumbs = addChild(UIBreadcumbs.class, "BreadcumbGroupSelector", "BreadcumbGroupSelector");
@@ -81,8 +85,11 @@ public class UIGroupMembershipSelector extends UIContainer {
         OrganizationService service = getApplicationComponent(OrganizationService.class);
         UITree tree = getChild(UITree.class);
         if (tree != null && tree.getSibbling() == null) {
+            //--- Get all parent goups
             Collection<?> sibblingsGroup = service.getGroupHandler().findGroups(null);
-            tree.setSibbling((List) sibblingsGroup);
+            //--- Get current user
+            String remoteUser = Util.getPortalRequestContext().getRemoteUser();
+            tree.setSibbling(filterSibblingGroupsByUser(remoteUser, sibblingsGroup));
         }
 
         List<MembershipType> memberships = (List<MembershipType>) service.getMembershipTypeHandler().findMembershipTypes();
@@ -118,10 +125,13 @@ public class UIGroupMembershipSelector extends UIContainer {
 
         UITree tree = getChild(UITree.class);
         Collection<?> sibblingGroup;
+        //--- Get current user
+        String remoteUser = Util.getPortalRequestContext().getRemoteUser();
 
         if (groupId == null) {
             sibblingGroup = service.getGroupHandler().findGroups(null);
-            tree.setSibbling((List) sibblingGroup);
+            //--- Set only groups accessible by current user
+            tree.setSibbling(filterSibblingGroupsByUser(remoteUser, sibblingGroup));
             tree.setChildren(null);
             tree.setSelected(null);
             selectGroup_ = null;
@@ -141,8 +151,8 @@ public class UIGroupMembershipSelector extends UIContainer {
         Collection childrenGroup = service.getGroupHandler().findGroups(selectGroup_);
         sibblingGroup = service.getGroupHandler().findGroups(parentGroup);
 
-        tree.setSibbling((List) sibblingGroup);
-        tree.setChildren((List) childrenGroup);
+        tree.setSibbling(filterSibblingGroupsByUser(remoteUser, sibblingGroup));
+        tree.setChildren(filterSibblingGroupsByUser(remoteUser, childrenGroup));
         tree.setSelected(selectGroup_);
         tree.setParentSelected(parentGroup);
     }
@@ -174,6 +184,48 @@ public class UIGroupMembershipSelector extends UIContainer {
             return uiForm.event(name, getId(), beanId);
         }
         return super.event(name, beanId);
+    }
+
+    /**
+     * Compute groups we need to display for end users, based on the current user roles
+     * @param remoteUser Id of the current user
+     * @param sibblingsGroup Default groups used to filter groups we should display to end user
+     * @return List of groups to be displayed
+     */
+    private List filterSibblingGroupsByUser (String remoteUser, Collection<?> sibblingsGroup) {
+
+        //--- List to handle groups to render
+        allSpaceGroups = new ArrayList();
+        try {
+            //--- Load organizationService
+            OrganizationService service = getApplicationComponent(OrganizationService.class);
+
+            //-- When current user use the default group list (parent groups)
+
+            if (remoteUser != null && remoteUser.length() !=0) {
+
+                //--- Get groups based on current user
+                Collection<?> sibblingsGroupByUser = service.getGroupHandler().findGroupsOfUser(remoteUser);
+
+                //--- Filter parent groups based on user roles and permissions
+                for (Object group : sibblingsGroup) {
+                    for (Object sibblingByUser : sibblingsGroupByUser) {
+                        if ( ((Group)sibblingByUser).getId().startsWith(((Group)group).getId())) {
+                            if (!allSpaceGroups.contains(group)) {
+                                allSpaceGroups.add(group);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        } catch (Exception E) {
+            //--- Track any exception raised by OrgService
+        }
+
+        return allSpaceGroups;
+
     }
 
     public static class ChangeNodeActionListener extends EventListener<UIComponent> {
