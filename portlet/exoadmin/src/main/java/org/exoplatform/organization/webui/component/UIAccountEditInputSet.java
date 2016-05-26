@@ -136,7 +136,7 @@ public class UIAccountEditInputSet extends UIFormInputSet {
         Query query = new Query();
         String email = getUIStringInput("email").getValue();
         query.setEmail(email);
-        if (service.getUserHandler().findUsers(query).getAll().size() > 0 && !oldEmail.equals(email)) {
+        if (!oldEmail.equals(email) && service.getUserHandler().findUsers(query).getAll().size() > 0 ) {
             // Be sure it keep old value
             user.setEmail(oldEmail);
             query.setEmail(oldEmail);
