@@ -203,14 +203,11 @@ public class TemplateService {
     @Managed
     @ManagedDescription("Clear the template cache for a specified template identifier")
     @Impact(ImpactType.IDEMPOTENT_WRITE)
-    public String reloadTemplate(@ManagedDescription("The template id") @ManagedName("templateId") String name) {
+    public void reloadTemplate(@ManagedDescription("The template id") @ManagedName("templateId") String name) {
         TemplateStatistic app = statisticService.findTemplateStatistic(name);
         if (app != null) {
             ResourceResolver resolver = app.getResolver();
             templatesCache_.remove(resolver.createResourceKey(name));
-            return "Cleared";
-        } else {
-          return "Template can't be cleared";
         }
     }
 
