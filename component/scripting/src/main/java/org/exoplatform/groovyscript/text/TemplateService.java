@@ -140,7 +140,7 @@ public class TemplateService implements Startable {
             @Override
             public void run() {
               templateStatistic.setResolver(resourceResolver);
-              // templateStatistic.setTime(time);
+              templateStatistic.setTime(time);
             }
           });
         }
