@@ -181,7 +181,7 @@
     <init-params>
       <value-param>
         <name>templates.collect.statistics</name>
-        <value>${exo.groovy.template.statistics.enable:false}</value>
+        <value>${exo.groovy.template.statistics.enable:true}</value>
       </value-param>
     </init-params>
   </component>

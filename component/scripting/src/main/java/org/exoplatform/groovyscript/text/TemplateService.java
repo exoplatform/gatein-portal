@@ -22,6 +22,8 @@ package org.exoplatform.groovyscript.text;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.exoplatform.commons.cache.future.FutureCache;
 import org.exoplatform.commons.cache.future.FutureExoCache;
@@ -48,6 +50,7 @@ import org.apache.commons.lang.StringUtils;
 import org.gatein.common.io.IOTools;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
+import org.picocontainer.Startable;
 
 import groovy.lang.Writable;
 import groovy.text.Template;
@@ -60,7 +63,9 @@ import groovy.text.Template;
         @Property(key = "type", value = "template") })
 @ManagedDescription("Template management service")
 @RESTEndpoint(path = "templateservice")
-public class TemplateService {
+public class TemplateService implements Startable {
+  
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     private GroovyTemplateEngine engine_;
 
@@ -70,7 +75,7 @@ public class TemplateService {
 
     private boolean cacheTemplate_ = true;
 
-    private boolean collectTemplateStatistics_ = false;
+    private boolean collectTemplateStatistics_ = true;
 
     private final Loader<ResourceKey, GroovyTemplate, ResourceResolver> loader = new Loader<ResourceKey, GroovyTemplate, ResourceResolver>() {
         public GroovyTemplate retrieve(ResourceResolver context, ResourceKey key) throws Exception {
@@ -127,9 +132,17 @@ public class TemplateService {
         long endTime = System.currentTimeMillis();
 
         if(collectTemplateStatistics_ ) {
-          TemplateStatistic templateStatistic = statisticService.getTemplateStatistic(name);
-          templateStatistic.setTime(endTime - startTime);
-          templateStatistic.setResolver(context.getResourceResolver());
+          final ResourceResolver resourceResolver = context.getResourceResolver();
+          final Long time = endTime - startTime;
+          final TemplateStatistic templateStatistic = statisticService.getTemplateStatistic(name);
+
+          executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+              templateStatistic.setResolver(resourceResolver);
+              // templateStatistic.setTime(time);
+            }
+          });
         }
     }
 
@@ -225,5 +238,13 @@ public class TemplateService {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    @Override
+    public void start() {}
+    
+    @Override
+    public void stop() {
+      executorService.shutdown();
     }
 }
