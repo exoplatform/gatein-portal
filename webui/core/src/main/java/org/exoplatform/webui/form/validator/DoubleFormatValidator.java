@@ -36,10 +36,10 @@ public class DoubleFormatValidator extends MultipleConditionsValidator implement
     }
 
     protected Double validateDouble(String value, String label, CompoundApplicationMessage messages) {
-        Object[] args = { label };
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
+            Object[] args = { label };
             messages.addMessage("NumberFormatValidator.msg.Invalid-number", args);
             return null;
         }
