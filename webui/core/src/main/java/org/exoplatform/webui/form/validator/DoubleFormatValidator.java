@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 eXo Platform SAS.
+ * Copyright (C) 2017 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,7 +25,7 @@ import org.exoplatform.webui.form.UIFormInput;
 import java.io.Serializable;
 
 /**
- * Created by The eXo Platform SARL Author : Walid Khessairi wkhessairi@exoplatform.com Oct 26, 2015
+ * Created by The eXo Platform SARL Author : Walid Khessairi wkhessairi@exoplatform.com Jan 02, 2017
  *
  * Validates whether this double is in a correct format
  */
