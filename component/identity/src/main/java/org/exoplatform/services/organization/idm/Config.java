@@ -71,7 +71,6 @@ public class Config {
     It will result in more accurate results and paginated list size info however can affect performance
     If you have DB only setup, it's possible to switch this option to true. This may help to have better performance.
     If you have DB+LDAP setup, it's necessary to keep this option as false, otherwise you can have inaccurate results*/
-
     private boolean countPaginatedUsers = true;
 
     private boolean filterDisabledUsersInQueries = true;
