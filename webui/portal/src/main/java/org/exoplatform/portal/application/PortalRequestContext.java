@@ -498,7 +498,7 @@ public class PortalRequestContext extends WebuiRequestContext {
         return request_.isUserInRole(roleUser);
     }
 
-    public final Writer getWriter() throws Exception {
+    public final Writer getWriter() throws IOException, IllegalArgumentException {
         if (writer_ == null) {
             writer_ = new PortalPrinter(response_.getOutputStream(), false, 30000);
         }
