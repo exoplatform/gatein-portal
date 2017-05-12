@@ -48,7 +48,7 @@ public class UIFormDateTimeInput extends UIFormInputBase<String> {
      * Whether to display the full time (with hours, minutes and seconds), not only the date
      */
     private boolean isDisplayTime_;
-
+    private boolean isDisplayTimeZone_=false;
     /**
      * The Date Pattern. Ex: dd/mm/yyyy
      */
@@ -68,6 +68,16 @@ public class UIFormDateTimeInput extends UIFormInputBase<String> {
         setDate(date);
     }
 
+    public UIFormDateTimeInput(String name, String bindField, Date date, boolean isDisplayTime,boolean isDisplayTimeZone) {
+        super(name, bindField, String.class);
+        setDisplayTime(isDisplayTime);
+        setDisplayTimeZone(isDisplayTimeZone);
+
+        WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+        formatPattern(requestContext.getLocale());
+        setDate(date);
+    }
+
     public UIFormDateTimeInput(String name, String bindField, Date date) {
         this(name, bindField, date, true);
     }
@@ -80,6 +90,9 @@ public class UIFormDateTimeInput extends UIFormInputBase<String> {
      */
     public void setDisplayTime(boolean isDisplayTime) {
         isDisplayTime_ = isDisplayTime;
+    }
+    public void setDisplayTimeZone(boolean displayTimeZone) {
+        this.isDisplayTimeZone_ = displayTimeZone;
     }
 
     public void setCalendar(Calendar calendar) {
@@ -205,6 +218,9 @@ public class UIFormDateTimeInput extends UIFormInputBase<String> {
         w.write("\"");
         w.write(",\"");
         w.write(monthNames_);
+        w.write("\"");
+        w.write(",\"");
+        w.write(String.valueOf(isDisplayTimeZone_));
         w.write("\"");
         w.write(");' onkeyup='eXo.webui.UICalendar.show();' name='");
         w.write(getName());
