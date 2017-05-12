@@ -36,8 +36,9 @@
 
     hideCalendarHandler : null,
 
-    init : function(field, isDisplayTime, datePattern, value, monthNames) {
+    init : function(field, isDisplayTime, datePattern, value, monthNames,isDisplayTimeZone) {
       this.isDisplayTime = isDisplayTime;
+      this.isDisplayTimeZone = isDisplayTimeZone;
 
       if (this.dateField) {
         this.dateField.parentNode.style.position = '';
@@ -445,6 +446,16 @@
           dateString = dateString.replace("mm", minute);
           dateString = dateString.replace("ss", second);
         }
+        if(this.isDisplayTimeZone)
+        {
+          var timezone=this.currentDate.getTimezoneOffset()/-60;
+          if(timezone>=0){
+            dateString=dateString+" +0"+Math.abs(timezone)+"00";
+          }else
+          {
+            dateString=dateString+" -0"+Math.abs(timezone)+"00";
+          }
+        }
         this.dateField.value = dateString;
         this.triggerChangeEvent();
         this.hide();
@@ -490,6 +501,16 @@
         dateString = dateString.replace("HH", hour);
         dateString = dateString.replace("mm", minute);
         dateString = dateString.replace("ss", second);
+      }
+      if(this.isDisplayTimeZone)
+      {
+        var timezone=this.currentDate.getTimezoneOffset()/-60;
+        if(timezone>=0){
+          dateString=dateString+" +0"+Math.abs(timezone)+"00";
+        }else
+        {
+          dateString=dateString+" -0"+Math.abs(timezone)+"00";
+        }
       }
 
       return dateString;
