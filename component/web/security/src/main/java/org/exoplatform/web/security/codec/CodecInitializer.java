@@ -135,7 +135,14 @@ public class CodecInitializer {
                 }
             }
 
-            File f = new File(gtnConfDir + "/codec/codeckey.txt");
+            String codecFilePath = PropertyManager.getProperty("exo.security.rememberme.codec.file");
+            String fileName = "codeckey.txt" ;
+            if(codecFilePath == null){
+                codecFilePath = gtnConfDir + "/codec/codeckey.txt";
+            } else {
+                fileName = codecFilePath.substring(codecFilePath.lastIndexOf("/"));
+            }
+            File f = new File(codecFilePath);
             if (!f.exists()) {
                 File codecDir = f.getParentFile();
                 if (!codecDir.exists()) {
@@ -159,7 +166,7 @@ public class CodecInitializer {
                 }
             }
             config.put("gatein.codec.jca.symmetric.keyalg", "AES");
-            config.put("gatein.codec.jca.symmetric.keystore", "codeckey.txt");
+            config.put("gatein.codec.jca.symmetric.keystore", fileName);
             config.put("gatein.codec.jca.symmetric.storetype", "JCEKS");
             config.put("gatein.codec.jca.symmetric.alias", "gtnKey");
             config.put("gatein.codec.jca.symmetric.keypass", "gtnKeyPass");
