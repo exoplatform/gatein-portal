@@ -193,7 +193,7 @@ public class TestLDAPOrganization extends TestOrganization {
     int pageSize = 2;
     int index = 0;
 
-    Set<String> foundUsernames = new HashSet<>();
+    Set<String> foundUsernames = new HashSet<String>();
     while (index < pageSize * 2 && index < usersCount) {
       int usersToLoad = (index + pageSize) > usersCount ? (usersCount - index) : pageSize;
       User[] users = userListAccess.load(index, usersToLoad);
