@@ -372,6 +372,8 @@ public class ExoFallbackIdentityStoreRepository extends FallbackIdentityStoreRep
         Collection<IdentityObject> defaultIOs = new LinkedList<IdentityObject>();
 
         IdentityStoreInvocationContext defaultInvocationContext = resolveInvocationContext(defaultIdentityStore, invocationCtx);
+        boolean exceptionOccuredDuringGettingIdentities=false;
+
         if (targetStores.size() == 1 && targetStores.contains(defaultIdentityStore)) {
             Collection<IdentityObject> resx = new LinkedList<IdentityObject>();
 
@@ -442,6 +444,10 @@ public class ExoFallbackIdentityStoreRepository extends FallbackIdentityStoreRep
                         results.addAll(identityObjects);
                     } catch (IdentityException e) {
                         log.log(Level.SEVERE, "Exception occurred: ", e);
+                        //if exception occurs during getting identities
+                        //like LDAP temporary connection problem
+                        //we don't want to delete identities
+                        exceptionOccuredDuringGettingIdentities=true;
                     }
                 }
             }
@@ -458,10 +464,14 @@ public class ExoFallbackIdentityStoreRepository extends FallbackIdentityStoreRep
                 while (identityObjectsIterator.hasNext()) {
                     IdentityObject identityObject = identityObjectsIterator.next();
                     if (!isFirstlyCreatedIn(defaultInvocationContext, defaultIdentityStore, identityObject) && !hasIdentityObject(mappedContext, mandatoryStore, identityObject)) {
-                        identityObjectsIterator.remove();
                         // delete IdentityObject from default store because it was
                         // deleted from mandatory store
-                        defaultIdentityStore.removeIdentityObject(defaultInvocationContext, identityObject);
+                        if (!exceptionOccuredDuringGettingIdentities) {
+                            identityObjectsIterator.remove();
+                            //don't deleted identities in hibernate store if error
+                            //occurs during getting this identities list
+                            defaultIdentityStore.removeIdentityObject(defaultInvocationContext, identityObject);
+                        }
                     }
                 }
             }
