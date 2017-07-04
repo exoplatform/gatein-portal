@@ -130,7 +130,7 @@
           <configuration>
             <forkMode>always</forkMode>
             <includes>
-              <include>org/exoplatform/web/security/codec/Test*</include>
+              <include>org/exoplatform/web/security/codec/TestCodecInitializer</include>
             </includes>
             <systemPropertyVariables>
               <gatein.test.conf.dir>${project.build.directory}/conf</gatein.test.conf.dir>
