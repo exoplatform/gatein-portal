@@ -541,7 +541,7 @@ public class ExoFallbackIdentityStoreRepository extends FallbackIdentityStoreRep
      * @return
      * @throws IdentityException
      */
-    private boolean isFirstlyCreatedIn(IdentityStoreInvocationContext mappedContext, IdentityStore targetStore, IdentityObject identityObject) throws IdentityException {
+    public boolean isFirstlyCreatedIn(IdentityStoreInvocationContext mappedContext, IdentityStore targetStore, IdentityObject identityObject) throws IdentityException {
         if (targetStore instanceof IdentityStoreSource) {
             try {
                 if (!mandatoryStoresObjects.contains(identityObject.getIdentityType().getName())) {
@@ -613,5 +613,9 @@ public class ExoFallbackIdentityStoreRepository extends FallbackIdentityStoreRep
             }
             throw e;
         }
+    }
+
+    public IdentityStoreInvocationContext getTargetIdentityStoreInvocationContext(IdentityStore identityStore, IdentityStoreInvocationContext identityStoresInvocationContext){
+        return resolveInvocationContext(identityStore, identityStoresInvocationContext);
     }
 }
