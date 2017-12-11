@@ -21,6 +21,7 @@ package org.exoplatform.commons.cache.future;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -40,6 +41,10 @@ public class FutureMap<K extends Serializable, V, C> extends FutureCache<K, V, C
         this.data = new ConcurrentHashMap<K, V>();
     }
 
+    public Set<K> getKeys() {
+      return data.keySet();
+    }
+
     public void clear() {
         data.clear();
     }
@@ -56,5 +61,11 @@ public class FutureMap<K extends Serializable, V, C> extends FutureCache<K, V, C
     @Override
     protected void put(K key, V value) {
         data.put(key, value);
+    }
+
+    @Override
+    protected void putOnly(K key, V value)
+    {
+        put(key, value);
     }
 }

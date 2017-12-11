@@ -93,6 +93,7 @@
     <supported-locale>ja</supported-locale>
     <supported-locale>ar</supported-locale>
     <supported-locale>pt-BR</supported-locale>
+    <supported-locale>pt-PT</supported-locale>
     <supported-locale>it</supported-locale>
     <supported-locale>tr</supported-locale>
     <supported-locale>zh-CN</supported-locale>
@@ -204,6 +205,7 @@
     <supported-locale>ja</supported-locale>
     <supported-locale>ar</supported-locale>
     <supported-locale>pt-BR</supported-locale>
+    <supported-locale>pt-PT</supported-locale>
     <supported-locale>it</supported-locale>
     <supported-locale>tr</supported-locale>
     <supported-locale>zh-CN</supported-locale>
@@ -631,6 +633,24 @@
           var _$ = window.jQuery; window.jQuery = $;
           <include>/skin/bootstrap/js/bootstrap-typeahead.js</include>
           window.jQuery = _$;
+        })($);
+      </adapter>
+    </script>
+    <depends>
+      <module>jquery</module>
+    </depends>
+  </module>
+
+  <!-- JQuery perfect scrollbar plugin -->
+  <module>
+    <name>jq_perfect_scrollbar</name>
+    <load-group>webuiExt</load-group>
+    <script>
+      <adapter>
+        (function($) {
+        var _$ = window.jQuery; window.jQuery = $;
+        <include>/javascript/perfect-scrollbar.jquery.min.js</include>
+        window.jQuery = _$;
         })($);
       </adapter>
     </script>
