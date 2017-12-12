@@ -3,6 +3,7 @@ package org.exoplatform.services.organization.idm;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.impl.UserImpl;
 import org.gatein.portal.idm.impl.repository.ExoFallbackIdentityStoreRepository;
 import org.gatein.portal.idm.impl.store.hibernate.ExoHibernateIdentityStoreImpl;
 import org.picketlink.idm.api.IdentitySearchCriteria;
@@ -13,13 +14,14 @@ import org.picketlink.idm.spi.model.IdentityObjectType;
 import org.picketlink.idm.spi.search.IdentityObjectSearchCriteria;
 import org.picketlink.idm.spi.store.IdentityStore;
 import org.picketlink.idm.spi.store.IdentityStoreInvocationContext;
+import org.exoplatform.services.organization.User;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
+import java.util.Iterator;
 import java.util.stream.Collectors;
 
-public class IdentityStoreUserListAccess implements ListAccess<String>, Serializable {
+public class IdentityStoreUserListAccess implements ListAccess<User>, Serializable {
 
     private static final Log LOG = ExoLogger.getLogger(IdentityStoreUserListAccess.class);
     private final ExoFallbackIdentityStoreRepository exoFallbackISRepository ;
@@ -35,7 +37,18 @@ public class IdentityStoreUserListAccess implements ListAccess<String>, Serializ
     }
 
     @Override
-    public String[] load(int index, int length) throws Exception {
+    public User[] load(int index, int length) throws Exception {
+
+        if(length == 0) {
+            return new User[0];
+        }
+
+        int totalSize = this.getSize();
+
+        if(index + length > totalSize) {
+            throw new IllegalArgumentException("Try to get more than number users can retrieve");
+        }
+
         IdentitySearchCriteriaImpl searchCriteria = new IdentitySearchCriteriaImpl();
 
         searchCriteria.page(index,length);
@@ -51,9 +64,17 @@ public class IdentityStoreUserListAccess implements ListAccess<String>, Serializ
                 return false;
             }).collect(Collectors.toList());
         }
-        List<String> usersList = usersCollection.stream().map(IdentityObject::getName).collect(Collectors.toList());
 
-        return  usersList.toArray(new String[length]);
+
+        User[] exoUsers = new User[usersCollection.size()];
+        Iterator<IdentityObject> userIt = usersCollection.iterator();
+        int i=0;
+        while (userIt.hasNext()){
+            exoUsers[i] = new UserImpl(userIt.next().getName());
+            i++;
+        }
+
+        return exoUsers;
     }
 
     @Override
@@ -81,4 +102,5 @@ public class IdentityStoreUserListAccess implements ListAccess<String>, Serializ
     private boolean isFirstlyCreatedIn(ExoFallbackIdentityStoreRepository idmRepo, IdentityStoreInvocationContext identityStoreInvocationContext, IdentityStore identityStore, IdentityObject identityObject) throws Exception{
         return idmRepo.isFirstlyCreatedIn(identityStoreInvocationContext,identityStore,identityObject);
     }
+
 }
