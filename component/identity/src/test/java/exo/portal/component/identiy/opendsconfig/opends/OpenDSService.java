@@ -38,7 +38,8 @@ import org.opends.server.util.EmbeddedUtils;
 import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
-import javax.naming.directory.DirContext;
+import javax.naming.NamingException;
+import javax.naming.directory.*;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 
@@ -268,5 +269,54 @@ public class OpenDSService
       }
 
       mainCtx.unbind(name);
+   }
+
+   public void addUserAccount(String user, String usersContainer){
+      Hashtable env = new Hashtable();
+      env.put(Context.INITIAL_CONTEXT_FACTORY,
+              "com.sun.jndi.ldap.LdapCtxFactory");
+      env.put(Context.PROVIDER_URL, LDAP_PROVIDER_URL);
+      env.put(Context.SECURITY_PRINCIPAL, LDAP_PRINCIPAL);
+      env.put(Context.SECURITY_CREDENTIALS, LDAP_CREDENTIALS);
+      try {
+         DirContext ctx = new InitialDirContext(env);
+
+         Attributes attrs = new BasicAttributes(true);
+
+         Attribute objclass = new BasicAttribute("objectclass");
+         objclass.add("top");
+         objclass.add("inetOrgPerson");
+         objclass.add("person");
+
+         Attribute userId = new BasicAttribute("uid");
+         userId.add(user);
+
+         Attribute cn = new BasicAttribute("cn");
+         cn.add("cn");
+
+         Attribute surname = new BasicAttribute("sn");
+         surname.add("surnameOf"+user);
+
+         Attribute pwd = new BasicAttribute("userPassword");
+         pwd.add("****");
+
+         Attribute email = new BasicAttribute("mail");
+         email.add(user+"@email.com");
+
+         attrs.put(objclass);
+         attrs.put(userId);
+         attrs.put(cn);
+         attrs.put(surname);
+         attrs.put(pwd);
+         attrs.put(email);
+
+         ctx.createSubcontext("uid=" + user + "," + usersContainer, attrs);
+         ctx.close();
+
+
+      } catch (NamingException e) {
+         e.printStackTrace();
+      }
+
    }
 }
