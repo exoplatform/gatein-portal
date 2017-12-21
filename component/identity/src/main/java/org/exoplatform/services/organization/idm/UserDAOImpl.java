@@ -212,13 +212,22 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
         if (broadcast)
             preSetEnabled(foundUser);
 
-        Attribute[] attrs = new Attribute[] { new SimpleAttribute(USER_ENABLED, String.valueOf(enabled)) };
 
         AttributesManager am = session.getAttributesManager();
-        try {
-            am.updateAttributes(userName, attrs);
-        } catch (Exception e) {
-            handleException("Cannot update enabled status for user: " + userName + "; ", e);
+
+        if (enabled) {
+            try {
+                am.removeAttributes(userName, new String[]{USER_ENABLED});
+            } catch (Exception e) {
+                handleException("Cannot update enabled status for user: " + userName + "; ", e);
+            }
+        } else {
+            Attribute[] attrs = new Attribute[]{new SimpleAttribute(USER_ENABLED, String.valueOf(enabled))};
+            try {
+                am.updateAttributes(userName, attrs);
+            } catch (Exception e) {
+                handleException("Cannot update enabled status for user: " + userName + "; ", e);
+            }
         }
 
         if (getIntegrationCache() != null) {
@@ -882,7 +891,7 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
     }
 
     private UserQueryBuilder addEnabledUserFilter(UserQueryBuilder qb) throws Exception {
-        return qb.attributeValuesFilter(UserDAOImpl.USER_ENABLED, new String[] {Boolean.TRUE.toString()});
+        return qb.attributeValuesFilter(UserDAOImpl.USER_ENABLED, new String[] {});
     }
 
     private UserQueryBuilder addDisabledUserFilter(UserQueryBuilder qb) throws Exception {
