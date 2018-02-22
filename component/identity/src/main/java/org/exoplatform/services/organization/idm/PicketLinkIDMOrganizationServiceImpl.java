@@ -19,14 +19,10 @@
 
 package org.exoplatform.services.organization.idm;
 
+import java.util.List;
+
 import javax.transaction.Status;
 
-import org.exoplatform.container.ExoContainer;
-import org.exoplatform.container.component.ComponentRequestLifecycle;
-import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.ObjectParameter;
-import org.exoplatform.services.organization.BaseOrganizationService;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.common.transaction.JTAUserTransactionLifecycleService;
@@ -35,7 +31,18 @@ import org.picketlink.idm.spi.configuration.metadata.IdentityConfigurationMetaDa
 import org.picketlink.idm.spi.configuration.metadata.IdentityStoreConfigurationMetaData;
 import org.picocontainer.Startable;
 
-import java.util.List;
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.component.ComponentRequestLifecycle;
+import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ObjectParameter;
+import org.exoplatform.services.organization.BaseOrganizationService;
+import org.exoplatform.services.organization.cache.OrganizationCacheHandler;
+import org.exoplatform.services.organization.idm.cache.CacheableGroupHandlerImpl;
+import org.exoplatform.services.organization.idm.cache.CacheableMembershipHandlerImpl;
+import org.exoplatform.services.organization.idm.cache.CacheableMembershipTypeHandlerImpl;
+import org.exoplatform.services.organization.idm.cache.CacheableUserHandlerImpl;
+import org.exoplatform.services.organization.idm.cache.CacheableUserProfileHandlerImpl;
 
 /*
  * @author <a href="mailto:boleslaw.dawidowicz at redhat.com">Boleslaw Dawidowicz</a>
@@ -53,6 +60,8 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
 
     private JTAUserTransactionLifecycleService jtaTransactionLifecycleService;
 
+    private  OrganizationCacheHandler organizationCacheHandler;
+
     private static final Logger log = LoggerFactory.getLogger(PicketLinkIDMOrganizationServiceImpl.class);
     private static final boolean traceLoggingEnabled = log.isTraceEnabled();
 
@@ -60,41 +69,40 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
     private volatile boolean acceptComponentRequestCall;
 
     public PicketLinkIDMOrganizationServiceImpl(InitParams params, PicketLinkIDMService idmService,
-            JTAUserTransactionLifecycleService jtaTransactionLifecycleService) throws Exception {
+                                                  JTAUserTransactionLifecycleService jtaTransactionLifecycleService, OrganizationCacheHandler organizationCacheHandler) throws Exception {
+      this.idmService_ = (PicketLinkIDMServiceImpl) idmService;
+      this.jtaTransactionLifecycleService = jtaTransactionLifecycleService;
+      this.organizationCacheHandler = organizationCacheHandler;
+
+      if (params != null) {
+        // Options
+        ObjectParameter configurationParam = params.getObjectParam(CONFIGURATION_OPTION);
+  
+        if (configurationParam != null) {
+          this.configuration = (Config) configurationParam.getObject();
+          initConfiguration(params);
+        }
+      }
+
+      if(organizationCacheHandler != null && (this.configuration == null || this.configuration.isUseCache())) {
+        groupDAO_ = new CacheableGroupHandlerImpl(organizationCacheHandler, this, idmService, this.configuration.isCountPaginatedUsers());
+        userDAO_ = new CacheableUserHandlerImpl(organizationCacheHandler, this, idmService);
+        userProfileDAO_ = new CacheableUserProfileHandlerImpl(organizationCacheHandler, this, idmService);
+        membershipDAO_ = new CacheableMembershipHandlerImpl(organizationCacheHandler, this, idmService, this.configuration.isCountPaginatedUsers());
+        membershipTypeDAO_ = new CacheableMembershipTypeHandlerImpl(organizationCacheHandler, this, idmService);
+      } else {
         groupDAO_ = new GroupDAOImpl(this, idmService);
         userDAO_ = new UserDAOImpl(this, idmService);
         userProfileDAO_ = new UserProfileDAOImpl(this, idmService);
         membershipDAO_ = new MembershipDAOImpl(this, idmService);
         membershipTypeDAO_ = new MembershipTypeDAOImpl(this, idmService);
+      }
 
-        idmService_ = (PicketLinkIDMServiceImpl) idmService;
+    }
 
-        this.jtaTransactionLifecycleService = jtaTransactionLifecycleService;
-
-        if (params != null) {
-            // Options
-            ObjectParameter configurationParam = params.getObjectParam(CONFIGURATION_OPTION);
-
-            if (configurationParam != null) {
-                this.configuration = (Config) configurationParam.getObject();
-            }
-            IdentityConfigurationMetaData configMD =((PicketLinkIDMServiceImpl) idmService).getConfigMD();
-            List<IdentityStoreConfigurationMetaData>  identityStores = null;
-            if(configMD != null){
-                identityStores = configMD.getIdentityStores();
-            }
-            /*If you have DB only setup*/
-            if(identityStores != null && identityStores.size() > 1){
-                this.configuration.setCountPaginatedUsers(false);
-                this.configuration.setSkipPaginationInMembershipQuery(true);
-            }else{
-             /*If you have DB+LDAP setup*/
-                this.configuration.setCountPaginatedUsers(true);
-                this.configuration.setSkipPaginationInMembershipQuery(false);
-            }
-
-        }
-
+    public PicketLinkIDMOrganizationServiceImpl(InitParams params, PicketLinkIDMService idmService,
+            JTAUserTransactionLifecycleService jtaTransactionLifecycleService) throws Exception {
+      this(params, idmService, jtaTransactionLifecycleService, null);
     }
 
     public final org.picketlink.idm.api.Group getJBIDMGroup(String groupId) throws Exception {
@@ -157,6 +165,16 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
                 if (traceLoggingEnabled) {
                     log.trace("Starting UserTransaction in method startRequest");
                 }
+
+                try {
+                    if(jtaTransactionLifecycleService.getUserTransaction().getStatus() != Status.STATUS_NO_TRANSACTION &&
+                            jtaTransactionLifecycleService.getUserTransaction().getStatus() != Status.STATUS_ACTIVE){
+                        //Commit or Rollback JTA transaction according to it's current status
+                        jtaTransactionLifecycleService.finishJTATransaction();
+                    }
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
                 jtaTransactionLifecycleService.beginJTATransaction();
             } else {
 
@@ -211,8 +229,9 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
             }
         } else {
             try {
-                if (idmService_.getIdentitySession().getTransaction().isActive()) {
-                    idmService_.getIdentitySession().getTransaction().commit();
+                Transaction transaction = idmService_.getIdentitySession().getTransaction();
+                if (transaction.isActive()) {
+                    transaction.commit();
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -221,15 +240,47 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
         }
     }
 
+    public boolean isStarted(ExoContainer container) {
+        try {
+            if (configuration.isUseJTA()) {
+                return jtaTransactionLifecycleService.getUserTransaction() == null ? false :
+                        jtaTransactionLifecycleService.getUserTransaction().getStatus()== Status.STATUS_ACTIVE;
+            } else {
+                return (idmService_.getIdentitySession() == null || idmService_.getIdentitySession().getTransaction() == null) ? false :
+                        idmService_.getIdentitySession().getTransaction().isActive();
+            }
+        } catch (Exception e) {
+            log.error("Error while checking on Transaction status : ", e);
+        }
+        return false;
+    }
+
     // Should be used only for non-JTA environment
     public void recoverFromIDMError(Exception e) {
         try {
             // We need to restart Hibernate transaction if it's available. First rollback old one and then start new one
             Transaction idmTransaction = idmService_.getIdentitySession().getTransaction();
-            if (idmTransaction.isActive()) {
-                idmTransaction.rollback();
-                idmTransaction.start();
-                log.info("IDM error recovery finished. Old transaction has been rolled-back and new transaction has been started");
+            if (idmTransaction != null && idmTransaction.isActive()) {
+                try {
+                  log.info("IDM Transaction rollback");
+                  idmTransaction.rollback();
+                  log.info("IDM Transaction has been rolled-backed");
+                } catch (Exception e1) {
+                  log.warn("Error during IDM Transaction rollback.", e1);
+                }
+                try {
+                  log.info("IDM Transaction restart");
+                  idmTransaction.start();
+                  log.info("IDM Transaction restarted");
+                } catch (Exception e1) {
+                  log.warn("Error during IDM Transaction restart, a new transaction will be started", e1);
+                  idmService_.getIdentitySession().beginTransaction();
+                  log.info("New IDM Transaction started");
+                }
+            } else {
+              log.info("New IDM Transaction start");
+              idmService_.getIdentitySession().beginTransaction();
+              log.info("New IDM Transaction started");
             }
         } catch (Exception e1) {
             log.warn("Error during recovery of old error", e1);
@@ -240,8 +291,44 @@ public class PicketLinkIDMOrganizationServiceImpl extends BaseOrganizationServic
         return configuration;
     }
 
+    public void clearCaches(){
+        if(organizationCacheHandler != null && (this.configuration == null || this.configuration.isUseCache())) {
+            if(groupDAO_ != null && groupDAO_ instanceof CacheableGroupHandlerImpl){
+                ((CacheableGroupHandlerImpl) groupDAO_).clearCache();
+            }
+            if(userDAO_ != null && userDAO_ instanceof CacheableGroupHandlerImpl){
+                ((CacheableGroupHandlerImpl) userDAO_).clearCache();
+            }
+            if(userProfileDAO_ != null && userProfileDAO_ instanceof CacheableGroupHandlerImpl){
+                ((CacheableGroupHandlerImpl) userProfileDAO_).clearCache();
+            }
+            if(membershipDAO_ != null && membershipDAO_ instanceof CacheableGroupHandlerImpl){
+                ((CacheableGroupHandlerImpl) membershipDAO_).clearCache();
+            }
+            if(membershipTypeDAO_ != null && membershipTypeDAO_ instanceof CacheableGroupHandlerImpl){
+                ((CacheableGroupHandlerImpl) membershipTypeDAO_).clearCache();
+            }
+        }
+    }
+
     public void setConfiguration(Config configuration) {
         this.configuration = configuration;
     }
 
+    private void initConfiguration(InitParams params) {
+      IdentityConfigurationMetaData configMD = ((PicketLinkIDMServiceImpl) this.idmService_).getConfigMD();
+      List<IdentityStoreConfigurationMetaData> identityStores = null;
+      if (configMD != null) {
+        identityStores = configMD.getIdentityStores();
+      }
+      /* If you have DB only setup */
+      if (identityStores != null && identityStores.size() > 1) {
+        this.configuration.setCountPaginatedUsers(false);
+        this.configuration.setSkipPaginationInMembershipQuery(true);
+      } else {
+        /* If you have DB+LDAP setup */
+        this.configuration.setCountPaginatedUsers(true);
+        this.configuration.setSkipPaginationInMembershipQuery(false);
+      }
+    }
 }

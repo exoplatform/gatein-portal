@@ -196,6 +196,17 @@ public class SkinService extends AbstractResourceService implements Startable {
         addResourceResolver(new CompositeResourceResolver(portalContainerName, skinConfigs_));
     }
 
+    public void addSkinConfig(SkinConfigPlugin skinConfigPlugin) {
+      if (!skinConfigPlugin.getAvailableSkins().isEmpty()) {
+        for (String newSkin : skinConfigPlugin.getAvailableSkins()) {
+          availableSkins_.add(newSkin);
+        }
+      }
+      if (StringUtils.isNotBlank(skinConfigPlugin.getDefaultSkin())) {
+        defaultSkin = skinConfigPlugin.getDefaultSkin();
+      }
+    }
+
     public String getDefaultSkin() {
         if(!availableSkins_.contains(defaultSkin)) {
             log.warn("Skin \"{}\" does not exist, switching to skin \"Default\" as the default skin", defaultSkin);
@@ -273,10 +284,10 @@ public class SkinService extends AbstractResourceService implements Startable {
             }
 
             skinConfig = new SimpleSkin(this, module, skinName, cssPath, priority);
-            if (!module.equals(CUSTOM_MODULE_ID)) {
-                portalSkins_.put(key, skinConfig);
-            } else {
+            if (module.startsWith(CUSTOM_MODULE_ID)) {
                 customPortalSkins_.put(key, skinConfig);
+            } else {
+                portalSkins_.put(key, skinConfig);
             }
             if (log.isDebugEnabled()) {
                 log.debug("Adding Portal skin : Bind " + key + " to " + skinConfig);
@@ -612,6 +623,22 @@ public class SkinService extends AbstractResourceService implements Startable {
     }
 
     /**
+     * Return a Portal SkinConfig mapping by the module and skin name
+     *
+     * @param module
+     * @param skinName
+     * 
+     * @return SkinConfig by SkinKey(module, skinName), or SkinConfig by SkinKey(module, SkinService.DEFAULT_SKIN)
+     */
+    public SkinConfig getPortalSkin(String module, String skinName) {
+      SkinConfig portalSkin = getPortalSkin(module, skinName, portalSkins_);
+      if (portalSkin == null) {
+        portalSkin = getPortalSkin(module, skinName, customPortalSkins_);
+      }
+      return portalSkin;
+    }
+
+    /**
      * Remove SkinKey from SkinCache by portalName and skinName
      *
      * @deprecated the method name is wrong to the behaviour it does. Use {@link #removeSkin(String, String)} instead
@@ -681,7 +708,7 @@ public class SkinService extends AbstractResourceService implements Startable {
      */
     public void removeSkin(String module, String skinName) {
         SkinKey key;
-        if (skinName.length() == 0) {
+        if (skinName == null || skinName.length() == 0) {
             key = new SkinKey(module, getDefaultSkin());
         } else {
             key = new SkinKey(module, skinName);
@@ -903,6 +930,18 @@ public class SkinService extends AbstractResourceService implements Startable {
         }
         matcher.appendTail(tmpBuilder);
         return tmpBuilder.toString();
+    }
+
+    private SkinConfig getPortalSkin(String module, String skinName, Map<SkinKey, SkinConfig> portalSkins) {
+      if(StringUtils.isEmpty(skinName)) {
+        skinName = getDefaultSkin();
+      }
+
+      SkinConfig config = portalSkins.get(new SkinKey(module, skinName));
+      if (config == null) {
+          config = portalSkins.get(new SkinKey(module, getDefaultSkin()));
+      }
+      return config;
     }
 
     /**

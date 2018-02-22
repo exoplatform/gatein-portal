@@ -133,10 +133,11 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
             preSave(user, true);
         }
 
+        org.picketlink.idm.api.User plIDMUser = null;
         try {
             orgService.flush();
 
-            session.getPersistenceManager().createUser(user.getUserName());
+            plIDMUser = session.getPersistenceManager().createUser(user.getUserName());
         } catch (Exception e) {
             handleException("Identity operation error: ", e);
             throw e;
@@ -147,7 +148,7 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
         }
 
         try {
-            persistUserInfo(user, session, true);
+            persistUserInfo(user, plIDMUser, session, true);
         } catch (Exception e) {
             // Workaround due to issues in Picketlink
             // 1. it has not support transaction for LDAP yet
@@ -180,7 +181,8 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
             preSave(user, false);
         }
 
-        persistUserInfo(user, session, false);
+        org.picketlink.idm.api.User plIDMUser = session.getPersistenceManager().findUser(user.getUserName());
+        persistUserInfo(user, plIDMUser, session, false);
 
         if (broadcast) {
             postSave(user, false);
@@ -210,13 +212,22 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
         if (broadcast)
             preSetEnabled(foundUser);
 
-        Attribute[] attrs = new Attribute[] { new SimpleAttribute(USER_ENABLED, String.valueOf(enabled)) };
 
         AttributesManager am = session.getAttributesManager();
-        try {
-            am.updateAttributes(userName, attrs);
-        } catch (Exception e) {
-            handleException("Cannot update enabled status for user: " + userName + "; ", e);
+
+        if (enabled) {
+            try {
+                am.removeAttributes(userName, new String[]{USER_ENABLED});
+            } catch (Exception e) {
+                handleException("Cannot update enabled status for user: " + userName + "; ", e);
+            }
+        } else {
+            Attribute[] attrs = new Attribute[]{new SimpleAttribute(USER_ENABLED, String.valueOf(enabled))};
+            try {
+                am.updateAttributes(userName, attrs);
+            } catch (Exception e) {
+                handleException("Cannot update enabled status for user: " + userName + "; ", e);
+            }
         }
 
         if (getIntegrationCache() != null) {
@@ -664,6 +675,10 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
     }
 
     public void persistUserInfo(User user, IdentitySession session, boolean isNew) throws Exception {
+      persistUserInfo(user, null, session, isNew);
+    }
+
+    public void persistUserInfo(User user, org.picketlink.idm.api.User plIDMUser, IdentitySession session, boolean isNew) throws Exception {
         orgService.flush();
 
         AttributesManager am = session.getAttributesManager();
@@ -694,10 +709,6 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
             } else {
                 removeDisplayNameIfNeeded(am, user);
             }
-
-            if (isNew && disableUserActived()) {
-                attributes.add(new SimpleAttribute(USER_ENABLED, Boolean.TRUE.toString()));
-            }
         } else {
             log.warn("User is of class " + user.getClass() + " which is not instanceof " + UserImpl.class);
         }
@@ -710,7 +721,10 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
                 attributes.add(new SimpleAttribute(USER_PASSWORD, user.getPassword()));
             } else {
                 try {
-                    am.updatePassword(session.getPersistenceManager().findUser(user.getUserName()), user.getPassword());
+                    if (plIDMUser == null) {
+                      plIDMUser = session.getPersistenceManager().findUser(user.getUserName());
+                    }
+                    am.updatePassword(plIDMUser, user.getPassword());
                 } catch (Exception e) {
                     handleException("Cannot update password: " + user.getUserName() + "; ", e);
                     throw e;
@@ -873,7 +887,7 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
     }
 
     private UserQueryBuilder addEnabledUserFilter(UserQueryBuilder qb) throws Exception {
-        return qb.attributeValuesFilter(UserDAOImpl.USER_ENABLED, new String[] {Boolean.TRUE.toString()});
+        return qb.attributeValuesFilter(UserDAOImpl.USER_ENABLED, new String[] {});
     }
 
     private UserQueryBuilder addDisabledUserFilter(UserQueryBuilder qb) throws Exception {
