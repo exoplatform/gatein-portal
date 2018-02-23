@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exoplatform.Constants;
 import org.exoplatform.commons.utils.ExpressionUtil;
 import org.exoplatform.commons.utils.PortalPrinter;
@@ -162,6 +163,7 @@ public class PortalRequestContext extends WebuiRequestContext {
         return jsmanager_;
     }
 
+    private String pageTitle = null;
     /**
      * Analyze a request and split this request's URI to get useful information then keep it in following properties of
      * PortalRequestContext :<br>
@@ -349,7 +351,15 @@ public class PortalRequestContext extends WebuiRequestContext {
         sendRedirect(loginPath.toString());
     }
 
+    public void setPageTitle(String title){
+        this.pageTitle = title;
+    }
     public String getTitle() throws Exception {
+        if(pageTitle != null){
+            String temp = pageTitle;
+            setPageTitle(null);
+            return temp;
+        }
         String title = (String) request_.getAttribute(REQUEST_TITLE);
 
         //
@@ -370,7 +380,7 @@ public class PortalRequestContext extends WebuiRequestContext {
                 if (page != null) {
                     title = page.getState().getDisplayName();
                     String resolvedTitle = ExpressionUtil.getExpressionValue(this.getApplicationResourceBundle(), title);
-                    if (resolvedTitle != null) {
+                    if (!StringUtils.isBlank(resolvedTitle) && !resolvedTitle.equals(title)) {
                         return resolvedTitle;
                     }
                 }
