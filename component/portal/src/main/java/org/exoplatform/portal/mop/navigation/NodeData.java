@@ -20,11 +20,7 @@
 package org.exoplatform.portal.mop.navigation;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.Utils;
@@ -67,7 +63,7 @@ class NodeData implements Serializable {
         if (_children == null) {
             children = Collections.emptyList();
         } else {
-            children = new ArrayList<>();
+            children = new ArrayList<String>();
             for (Navigation child : _children) {
               children.add(child.getObjectId());
             }

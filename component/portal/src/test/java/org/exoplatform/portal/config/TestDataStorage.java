@@ -999,7 +999,9 @@ public class TestDataStorage extends AbstractConfigTest {
         PersistentApplicationState<Portlet> state = (PersistentApplicationState) app.getState();
 
         //
-        Portlet prefs = storage_.load(state, ApplicationType.PORTLET);
+        Portlet prefs = new Portlet();
+        prefs.setValue("template", "initialvalue");
+        storage_.save(state, prefs);
 
         //
         prefs.setValue("template", null);
