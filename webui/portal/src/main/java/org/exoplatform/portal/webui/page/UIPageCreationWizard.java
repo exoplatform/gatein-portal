@@ -284,13 +284,21 @@ public class UIPageCreationWizard extends UIPageWizard {
         private void setDefaultPermission(Page page, SiteKey siteKey) {
             UIPortal uiPortal = Util.getUIPortal();
             if (SiteType.PORTAL.equals(siteKey.getType())) {
-                page.setAccessPermissions(uiPortal.getAccessPermissions());
-                page.setEditPermission(uiPortal.getEditPermission());
+                if (page.getAccessPermissions() == null || page.getAccessPermissions().length == 0) {
+                  page.setAccessPermissions(uiPortal.getAccessPermissions());
+                }
+                if (page.getEditPermission() == null || page.getEditPermission().isEmpty()) {
+                  page.setEditPermission(uiPortal.getEditPermission());
+                }
             } else if (SiteType.GROUP.equals(siteKey.getType())) {
                 UserACL acl = Util.getUIPortalApplication().getApplicationComponent(UserACL.class);
                 String siteName = siteKey.getName().startsWith("/") ? siteKey.getName() : "/" + siteKey.getName();
-                page.setAccessPermissions(new String[] { "*:" + siteName });
-                page.setEditPermission(acl.getMakableMT() + ":" + siteName);
+                if (page.getAccessPermissions() == null || page.getAccessPermissions().length == 0) {
+                  page.setAccessPermissions(new String[] { "*:" + siteName });
+                }
+                if (page.getEditPermission() == null || page.getEditPermission().isEmpty()) {
+                  page.setEditPermission(acl.getMakableMT() + ":" + siteName);
+                }
             }
         }
 
@@ -339,9 +347,11 @@ public class UIPageCreationWizard extends UIPageWizard {
                 uiWizard.updateWizardComponent();
             }
             page.setModifiable(true);
-
-            // Set default permissions on the page
-            setDefaultPermission(page, pageNavi.getKey());
+            
+            if (page.getAccessPermissions() == null || page.getAccessPermissions().length == 0 || page.getEditPermission() == null || page.getEditPermission().isEmpty()) {
+              // Set default permissions on the page
+              setDefaultPermission(page, pageNavi.getKey());
+            }
 
             if (page.getTitle() == null || page.getTitle().trim().length() == 0) {
                 page.setTitle(pageName.getValue());
