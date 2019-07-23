@@ -17,21 +17,17 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.exoplatform.webui.organization.account;
+package org.exoplatform.webui.organization;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.exoplatform.commons.serialization.api.annotations.Serialized;
 import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.web.application.ApplicationMessage;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
-import org.exoplatform.webui.core.UIApplication;
 import org.exoplatform.webui.core.UIBreadcumbs;
 import org.exoplatform.webui.core.UIBreadcumbs.LocalPath;
 import org.exoplatform.webui.core.UIComponent;
@@ -44,26 +40,25 @@ import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.form.UIForm;
 
 /**
- * Author : dang.tung tungcnw@gmail.com Nov 22, 2008
+ * Created by The eXo Platform SARL Author : Pham Dung Ha ha.pham@exoplatform.com May 8, 2007
  */
+
 @ComponentConfigs({
-        @ComponentConfig(template = "system:/groovy/webui/organization/account/UIGroupSelector.gtmpl", events = {
+        @ComponentConfig(template = "system:/groovy/organization/webui/component/UIGroupSelector.gtmpl", events = {
                 @EventConfig(phase = Phase.DECODE, listeners = UIGroupSelector.ChangeNodeActionListener.class),
-                @EventConfig(phase = Phase.DECODE, listeners = UIGroupSelector.SelectGroupActionListener.class),
-                @EventConfig(phase = Phase.DECODE, listeners = UIGroupSelector.SelectPathActionListener.class) }),
-        @ComponentConfig(type = UITree.class, id = "UITreeGroupSelector", template = "system:/groovy/webui/core/UITree.gtmpl", events = @EventConfig(phase = Phase.DECODE, listeners = UITree.ChangeNodeActionListener.class)),
-        @ComponentConfig(type = UIBreadcumbs.class, id = "BreadcumbGroupSelector", template = "system:/groovy/webui/core/UIBreadcumbs.gtmpl", events = @EventConfig(phase = Phase.DECODE, listeners = UIBreadcumbs.SelectPathActionListener.class)) })
-@Serialized
+                @EventConfig(phase = Phase.DECODE, listeners = UIGroupSelector.SelectPathActionListener.class),
+                @EventConfig(phase = Phase.DECODE, listeners = UIGroupSelector.SelectGroupActionListener.class) }),
+        @ComponentConfig(type = UITree.class, id = "UITreeGroupSelector", template = "system:/groovy/webui/core/UITree.gtmpl", events = @EventConfig(listeners = UITree.ChangeNodeActionListener.class, phase = Phase.DECODE)),
+        @ComponentConfig(type = UIBreadcumbs.class, id = "BreadcumbGroupSelector", template = "system:/groovy/webui/core/UIBreadcumbs.gtmpl", events = @EventConfig(listeners = UIBreadcumbs.SelectPathActionListener.class, phase = Phase.DECODE)) })
 public class UIGroupSelector extends UIContainer {
 
-    private Group selectGroup_;
+    private Group selectedGroup;
 
-    @SuppressWarnings("unchecked")
     public UIGroupSelector() throws Exception {
         UIBreadcumbs uiBreadcumbs = addChild(UIBreadcumbs.class, "BreadcumbGroupSelector", "BreadcumbGroupSelector");
         UITree tree = addChild(UITree.class, "UITreeGroupSelector", "TreeGroupSelector");
         OrganizationService service = getApplicationComponent(OrganizationService.class);
-        Collection<?> sibblingsGroup = service.getGroupHandler().findGroups(null);
+        Collection sibblingsGroup = service.getGroupHandler().findGroups(null);
 
         tree.setSibbling((List) sibblingsGroup);
         tree.setIcon("GroupAdminIcon");
@@ -75,42 +70,45 @@ public class UIGroupSelector extends UIContainer {
         uiBreadcumbs.setBreadcumbsStyle("UIExplorerHistoryPath");
     }
 
-    public Group getCurrentGroup() {
-        return selectGroup_;
+    public Group getSelectedGroup() {
+        return selectedGroup;
     }
 
-    @SuppressWarnings("unchecked")
+    public void setSelectedGroup(Group group) {
+        selectedGroup = group;
+    }
+
     public void changeGroup(String groupId) throws Exception {
         OrganizationService service = getApplicationComponent(OrganizationService.class);
         UIBreadcumbs uiBreadcumb = getChild(UIBreadcumbs.class);
         uiBreadcumb.setPath(getPath(null, groupId));
 
         UITree tree = getChild(UITree.class);
-        Collection<?> sibblingGroup;
+        Collection sibblingGroup;
 
         if (groupId == null) {
             sibblingGroup = service.getGroupHandler().findGroups(null);
             tree.setSibbling((List) sibblingGroup);
             tree.setChildren(null);
             tree.setSelected(null);
-            selectGroup_ = null;
+            selectedGroup = null;
             return;
         }
 
-        selectGroup_ = service.getGroupHandler().findGroupById(groupId);
+        selectedGroup = service.getGroupHandler().findGroupById(groupId);
         String parentGroupId = null;
-        if (selectGroup_ != null)
-            parentGroupId = selectGroup_.getParentId();
+        if (selectedGroup != null)
+            parentGroupId = selectedGroup.getParentId();
         Group parentGroup = null;
         if (parentGroupId != null)
             parentGroup = service.getGroupHandler().findGroupById(parentGroupId);
 
-        Collection childrenGroup = service.getGroupHandler().findGroups(selectGroup_);
+        Collection childrenGroup = service.getGroupHandler().findGroups(selectedGroup);
         sibblingGroup = service.getGroupHandler().findGroups(parentGroup);
 
         tree.setSibbling((List) sibblingGroup);
         tree.setChildren((List) childrenGroup);
-        tree.setSelected(selectGroup_);
+        tree.setSelected(selectedGroup);
         tree.setParentSelected(parentGroup);
     }
 
@@ -128,83 +126,77 @@ public class UIGroupSelector extends UIContainer {
         return list;
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> getListGroup() throws Exception {
-        OrganizationService service = getApplicationComponent(OrganizationService.class);
-        List<String> listGroup = new ArrayList<String>();
-        if (getCurrentGroup() == null)
-            return null;
-        Collection<Group> groups = service.getGroupHandler().findGroups(getCurrentGroup());
-        if (groups.size() > 0) {
-            for (Object child : groups) {
-                Group childGroup = (Group) child;
-                listGroup.add(childGroup.getId());
-            }
-        }
-        return listGroup;
+    // public void processDecode(WebuiRequestContext context) throws Exception {
+    // super.processDecode(context);
+    // UIForm uiForm = getAncestorOfType(UIForm.class);
+    // String action = uiForm.getSubmitAction();
+    // if(action == null) return;
+    // Event<UIComponent> event = createEvent(action, Event.Phase.DECODE, context) ;
+    // if(event != null) event.broadcast() ;
+    // }
 
-    }
-
-    public String event(String name, String beanId) throws Exception {
+    public String event(String name) throws Exception {
         UIForm uiForm = getAncestorOfType(UIForm.class);
         if (uiForm != null)
-            return uiForm.event(name, getId(), beanId);
-        return super.event(name, beanId);
+            return uiForm.event(name, getId(), "");
+        return super.event(name);
     }
 
     public static class ChangeNodeActionListener extends EventListener<UITree> {
         public void execute(Event<UITree> event) throws Exception {
-            UIGroupSelector uiGroupSelector = event.getSource().getAncestorOfType(UIGroupSelector.class);
             String groupId = event.getRequestContext().getRequestParameter(OBJECTID);
-            uiGroupSelector.changeGroup(groupId);
-            event.getRequestContext().addUIComponentToUpdateByAjax(uiGroupSelector);
+            UIGroupSelector uiSelector = null;
+            UITree uicom = event.getSource();
+            uiSelector = uicom.getParent();
+            uiSelector.changeGroup(groupId);
+
+            UIForm uiForm = uiSelector.getAncestorOfType(UIForm.class);
+            UIPopupWindow uiPopup = uiSelector.getParent();
+            uiPopup.setShow(true);
+            if (uiForm != null) {
+                event.getRequestContext().addUIComponentToUpdateByAjax(uiForm.getParent());
+            } else {
+                event.getRequestContext().addUIComponentToUpdateByAjax(uiPopup);
+            }
+        }
+    }
+
+    public static class SelectPathActionListener extends EventListener<UIGroupSelector> {
+        public void execute(Event<UIGroupSelector> event) throws Exception {
+            UIGroupSelector uiSelector = event.getSource();
+            UIBreadcumbs uiBreadcumbs = uiSelector.getChild(UIBreadcumbs.class);
+            String objectId = event.getRequestContext().getRequestParameter(OBJECTID);
+            uiBreadcumbs.setSelectPath(objectId);
+            String selectGroupId = uiBreadcumbs.getSelectLocalPath().getId();
+            uiSelector.changeGroup(selectGroupId);
+
+            UIForm uiForm = event.getSource().getAncestorOfType(UIForm.class);
+            UIPopupWindow uiPopup = uiSelector.getParent();
+            uiPopup.setShow(true);
+            if (uiForm != null) {
+                event.getRequestContext().addUIComponentToUpdateByAjax(uiForm.getParent());
+            } else {
+                event.getRequestContext().addUIComponentToUpdateByAjax(uiPopup);
+            }
         }
     }
 
     public static class SelectGroupActionListener extends EventListener<UIGroupSelector> {
         public void execute(Event<UIGroupSelector> event) throws Exception {
             UIGroupSelector uiSelector = event.getSource();
-            UIComponent uiPermission = uiSelector.<UIComponent> getParent().getParent();
-            WebuiRequestContext pcontext = event.getRequestContext();
 
             UIPopupWindow uiPopup = uiSelector.getParent();
-            UIForm uiForm = event.getSource().getAncestorOfType(UIForm.class);
-            if (uiForm != null) {
-                event.getRequestContext().addUIComponentToUpdateByAjax(uiForm.getParent());
-            } else {
-                event.getRequestContext().addUIComponentToUpdateByAjax(uiPopup);
-            }
-            if (uiSelector.getCurrentGroup() == null) {
-                UIApplication uiApp = pcontext.getUIApplication();
-                uiApp.addMessage(new ApplicationMessage("UIGroupSelector.msg.selectGroup", null));
-                uiPopup.setShow(true);
-                return;
-            }
-
-            uiPermission.broadcast(event, event.getExecutionPhase());
             uiPopup.setShow(false);
-
-        }
-    }
-
-    public static class SelectPathActionListener extends EventListener<UIBreadcumbs> {
-        public void execute(Event<UIBreadcumbs> event) throws Exception {
-            UIBreadcumbs uiBreadcumbs = event.getSource();
-            UIGroupSelector uiSelector = uiBreadcumbs.getParent();
-            String objectId = event.getRequestContext().getRequestParameter(OBJECTID);
-            uiBreadcumbs.setSelectPath(objectId);
-            String selectGroupId = uiBreadcumbs.getSelectLocalPath().getId();
-            uiSelector.changeGroup(selectGroupId);
-
-            UIPopupWindow uiPopup = uiSelector.getParent();
-            uiPopup.setShow(true);
-
             UIForm uiForm = event.getSource().getAncestorOfType(UIForm.class);
             if (uiForm != null) {
                 event.getRequestContext().addUIComponentToUpdateByAjax(uiForm.getParent());
+                uiForm.broadcast(event, event.getExecutionPhase());
             } else {
                 event.getRequestContext().addUIComponentToUpdateByAjax(uiPopup);
+                UIComponent uiParent = uiPopup.getParent();
+                uiParent.broadcast(event, event.getExecutionPhase());
             }
+
         }
     }
 

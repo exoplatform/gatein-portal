@@ -20,7 +20,11 @@
 package org.exoplatform.portal.config;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -33,7 +37,6 @@ import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityConstants;
@@ -73,8 +76,6 @@ public class UserACL {
     private String adminGroups;
 
     private String adminMSType;
-
-    private Map<String, GroupVisibilityPlugin> groupVisibilityPlugins = new HashMap<>();
 
     public UserACL(InitParams params) {
         UserACLMetaData md = new UserACLMetaData(params);
@@ -156,10 +157,6 @@ public class UserACL {
             log.info("Overidden PortalCreatorGroup by PortalACLPlugin");
             portalCreatorGroups_ = portalCreationRoles;
         }
-    }
-
-    public void addGroupVisibilityPlugin(GroupVisibilityPlugin plugin) {
-        this.groupVisibilityPlugins.put(plugin.getName(), plugin);
     }
 
     public String getMakableMT() {
@@ -481,11 +478,6 @@ public class UserACL {
         }
         String membership = permission.getMembership();
         return identity.isMemberOf(groupId, membership);
-    }
-
-    public boolean hasPermission(Identity identity, Group group, String pluginId) {
-        GroupVisibilityPlugin plugin = groupVisibilityPlugins.get(pluginId);
-        return plugin == null ? true : plugin.hasPermission(identity, group);
     }
 
     private List<String> defragmentPermission(String permission) {
