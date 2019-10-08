@@ -32,6 +32,9 @@ import org.exoplatform.webui.form.UIFormInput;
 /** @author <a href="mailto:chris.laprun@jboss.com">Chris Laprun</a> */
 public abstract class MultipleConditionsValidator extends AbstractValidator implements Serializable {
     public void validate(UIFormInput uiInput) throws Exception {
+        if (uiInput.getName().equals("username")) {
+            trimValue = false;
+        }
         String value = trimmedValueOrNullIfBypassed((String) uiInput.getValue(), uiInput, exceptionOnMissingMandatory,
                 trimValue);
         if (value == null) {
