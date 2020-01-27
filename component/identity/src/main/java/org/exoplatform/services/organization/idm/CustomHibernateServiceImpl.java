@@ -28,11 +28,12 @@ import java.security.PrivilegedAction;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.service.BootstrapServiceRegistry;
-import org.hibernate.service.BootstrapServiceRegistryBuilder;
+import org.hibernate.boot.registry.BootstrapServiceRegistry;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.service.ServiceRegistryBuilder;
-import org.hibernate.service.internal.StandardServiceRegistryImpl;
+
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.boot.registry.internal.StandardServiceRegistryImpl;
 
 import org.exoplatform.commons.utils.SecurityHelper;
 import org.exoplatform.container.xml.InitParams;
@@ -71,8 +72,8 @@ public class CustomHibernateServiceImpl extends HibernateServiceImpl {
 
         BootstrapServiceRegistry bootstrapRegistry = createHibernateBootstrapServiceRegistry();
 
-        final ServiceRegistry serviceRegistry = new ServiceRegistryBuilder(bootstrapRegistry).applySettings(
-                conf.getProperties()).buildServiceRegistry();
+        final ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder(bootstrapRegistry).applySettings(
+                conf.getProperties()).build();
         conf.setSessionFactoryObserver(new SessionFactoryObserver() {
             @Override
             public void sessionFactoryCreated(SessionFactory factory) {
@@ -94,8 +95,7 @@ public class CustomHibernateServiceImpl extends HibernateServiceImpl {
     protected BootstrapServiceRegistry createHibernateBootstrapServiceRegistry() {
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         ClassLoader hibernateCl = BootstrapServiceRegistry.class.getClassLoader();
-        return new BootstrapServiceRegistryBuilder().withApplicationClassLoader(tccl).withHibernateClassLoader(hibernateCl)
-                .build();
+        return new BootstrapServiceRegistryBuilder().with(tccl).with(hibernateCl).build();
     }
 
 }
