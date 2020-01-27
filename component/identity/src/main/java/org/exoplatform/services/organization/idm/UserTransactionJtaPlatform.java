@@ -25,8 +25,8 @@ package org.exoplatform.services.organization.idm;
 
 import javax.transaction.UserTransaction;
 
-import org.hibernate.service.jndi.JndiException;
-import org.hibernate.service.jta.platform.internal.JBossAppServerJtaPlatform;
+import org.hibernate.engine.jndi.JndiException;
+import org.hibernate.engine.transaction.jta.platform.internal.JBossAppServerJtaPlatform;
 
 // We need fallback to "java:jboss/UserTransaction" because "java:comp/UserTransaction" is not available
 // during eXo kernel boot in AS7 environment.
