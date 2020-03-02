@@ -44,7 +44,7 @@ public class GroupManagement {
     }
 
     public static UserACL getUserACL() {
-        return ExoContainerContext.getService(UserACL.class);
+        return ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(UserACL.class);
     }
 
     public static boolean isMembershipOfGroup(String username, String membership, String groupId) throws Exception {
