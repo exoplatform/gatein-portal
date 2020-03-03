@@ -1,9 +1,9 @@
 package org.exoplatform.organization.webui.component;
 
-import org.exoplatform.component.test.AbstractKernelTest;
-import org.exoplatform.component.test.ConfigurationUnit;
-import org.exoplatform.component.test.ConfiguredBy;
-import org.exoplatform.component.test.ContainerScope;
+import org.exoplatform.application.registry.ApplicationRegistryService;
+import org.exoplatform.commons.chromattic.ChromatticManager;
+import org.exoplatform.component.test.*;
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.ConversationState;
@@ -15,12 +15,13 @@ import org.junit.Test;
 import static java.util.Collections.singleton;
 
 @ConfiguredBy({
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.portal-configuration.xml"),
         @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
+        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/test-group-management-configuration.xml"),
         @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "org/exoplatform/services/organization/TestOrganization-configuration.xml") })
 public class GroupManagementTest extends AbstractKernelTest {
 
   protected OrganizationService organizationService;
+
 
   @Before
   public void setUp() throws Exception {
