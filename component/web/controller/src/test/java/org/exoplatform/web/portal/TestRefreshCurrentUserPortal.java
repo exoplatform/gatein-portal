@@ -62,9 +62,14 @@ public class TestRefreshCurrentUserPortal extends AbstractPortalTest {
     private UserPortal userPortal;
 
     @Override
+    protected void beforeRunBare() {
+        setForceContainerReload(true);
+        super.beforeRunBare();
+    }
+
+    @Override
     protected void setUp() throws Exception {
         begin();
-        setForceContainerReload(true);
 
         UserPortalConfigService upcs = (UserPortalConfigService) getContainer().getComponentInstanceOfType(
                 UserPortalConfigService.class);
