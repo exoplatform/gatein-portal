@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.exoplatform.gatein.portal</groupId>
     <artifactId>exo.portal.parent</artifactId>
-    <version>5.3.2-spaces-groups-binding-SNAPSHOT</version>
+    <version>5.3.2-spaces-groups-binding-02</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
